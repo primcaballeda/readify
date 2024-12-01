@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "651435724951",
+    "project_id": "testdemo-3439c",
+    "storage_bucket": "testdemo-3439c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:651435724951:android:c892c1749d3c73370a59d2",
+        "android_client_info": {
+          "package_name": "com.example.princess_caballeda"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBryOXUXVmT5l0glA0_No1_YxFb9tKF8D4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:651435724951:android:55994a92eaa244d80a59d2",
+        "android_client_info": {
+          "package_name": "com.example.readify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBryOXUXVmT5l0glA0_No1_YxFb9tKF8D4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

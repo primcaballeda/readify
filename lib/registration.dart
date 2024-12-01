@@ -1,0 +1,186 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:readify/homepage.dart';
+import 'package:readify/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false, // Removes debug banner
+      home: RegistrationPage(),
+    );
+  }
+}
+
+class RegistrationPage extends StatefulWidget {
+  const RegistrationPage({super.key});
+
+  @override
+  _RegistrationPageState createState() => _RegistrationPageState();
+}
+
+class _RegistrationPageState extends State<RegistrationPage> {
+  final FirebaseAuthServices _firebaseAuthServices = FirebaseAuthServices();
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController usernameController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController confirmpasswordController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    confirmpasswordController.dispose();
+    emailController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFFFFFE8),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: _form(),
+      ),
+    );
+  }
+
+  Widget _form() {
+    return Padding(
+      padding: const EdgeInsets.all(22.0),
+      child: Center(
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _plogo(),
+                _inputfield("Username", usernameController),
+                const SizedBox(height: 15.0),
+                _inputfield("Email", emailController, isEmail: true),
+                const SizedBox(height: 15.0),
+                _inputfield("Password", passwordController, isPassword: true),
+                const SizedBox(height: 15.0),
+                _inputfield("Confirm Password", confirmpasswordController, isPassword: true),
+                const SizedBox(height: 15.0),
+                _registerButton(),
+                const SizedBox(height: 10.0),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _plogo() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 0.0),
+      child: Image.asset(
+        'assets/login_logo.png',
+        width: 300,
+        height: 300,
+      ),
+    );
+  }
+
+  Widget _inputfield(String hintText, TextEditingController controller, {bool isPassword = false, bool isEmail = false}) {
+    var border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      borderSide: const BorderSide(
+        color: Color(0xFFFFD4D4),
+        width: 3.0,
+      ),
+    );
+
+    return TextFormField(
+      style: TextStyle(color: const Color(0xFF953154).withOpacity(0.49)),
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: const Color(0xFF953154).withOpacity(0.49)),
+        enabledBorder: border,
+        focusedBorder: border,
+      ),
+      obscureText: isPassword,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return '$hintText is a required field';
+        }
+        if (isEmail && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+          return 'Enter a valid email address';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _registerButton() {
+    return ElevatedButton(
+      onPressed: () {
+        if (_formKey.currentState!.validate()) {
+          _signUp();
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 50), // Set the button size
+        backgroundColor: const Color(0xFFFFD4D4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(
+          "Sign Up",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: const Color(0xFF953154).withOpacity(0.49),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _signUp() async {
+    String username = usernameController.text;
+    String email = emailController.text;
+    String password = passwordController.text;
+    String confirmPassword = confirmpasswordController.text;
+
+    try {
+      User? user = await _firebaseAuthServices.signUpWithEmailAndPassword(email, password);
+
+      if (user != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MyHomePage(title: '',)),
+        );
+      } else {
+        Fluttertoast.showToast(
+          msg: "Account creation failed. Please try again.",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: const Color.fromARGB(157, 0, 0, 0),
+          gravity: ToastGravity.SNACKBAR,
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+}

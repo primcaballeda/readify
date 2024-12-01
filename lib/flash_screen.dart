@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'login_page.dart'; // Import your login page
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: FlashScreen(),
+      home: const FlashScreen(),
     );
   }
 }
@@ -33,7 +34,7 @@ class _FlashScreenState extends State<FlashScreen> {
     super.initState();
     Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => const LoginPage()), // Navigate to LoginPage
       );
     });
   }
@@ -45,25 +46,6 @@ class _FlashScreenState extends State<FlashScreen> {
       body: Center(
         child: Image.asset('assets/logo.png')
         // child: Text('Readify..', style: TextStyle(fontFamily: 'Brittany', fontSize: 76, color: Color(0xFFFFBEBE))),
-      ),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(""),
-      ),
-      body: const Center(
-        child: Text(
-          'Readify',
-          style: TextStyle(fontSize: 24, color: Colors.blue),
-        ),
       ),
     );
   }

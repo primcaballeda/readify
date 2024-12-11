@@ -187,12 +187,12 @@ Widget buildReviewCardPlaceholder() {
 
                       // Username text
                       const Text(
-                        'username',
+                        'yanna',
                         style: TextStyle(
                           fontFamily: 'Josefin Sans Bold',
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF953154),
+                          color: Color.fromARGB(255, 2, 2, 2),
                         ),
                       ),
                     ],

@@ -72,43 +72,47 @@ class _RootPageState extends State<RootPage> {
           padding: const EdgeInsets.only(left: 2),
           child: SizedBox(
             width: 280, // Adjust the width as needed
-            child: TextField(
+            child: SizedBox(
+              height: 50, // Set the height of the TextField
+              child: TextField(
               style: const TextStyle(color: Color(0XFFFFD4D4)),
               decoration: const InputDecoration(
+                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
                 hintText: 'Search for books or people',
                 hintStyle: TextStyle(color: Color(0x7F953154)),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                borderRadius: BorderRadius.all(Radius.circular(20.0)),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                  borderSide: BorderSide(
-                    color: Color(0xFFFFD4D4), // Color for the border
-                    width: 3.0, // Adjust width as needed
-                  ),
+                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                borderSide: BorderSide(
+                  color: Color(0xFFFFD4D4), // Color for the border
+                  width: 3.0, // Adjust width as needed
+                ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                  borderSide: BorderSide(
-                    color: Color(0xFFFFD4D4), // Color for the border when focused
-                    width: 3.0, // Adjust width as needed
-                  ),
+                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                borderSide: BorderSide(
+                  color: Color(0xFFFFD4D4), // Color for the border when focused
+                  width: 3.0, // Adjust width as needed
+                ),
                 ),
               ),
               onChanged: (value) {
                 // Perform search functionality here
               },
+              ),
             ),
           ),
         ),
         actions: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
+            padding: const EdgeInsets.only(right: 20.0),
             child: IconButton(
               icon: Image.asset(
                 'assets/notif_bell.png',
-                width: 50,
-                height: 90,
+                width: 35,
+                height: 35,
               ),
               onPressed: () {
                 // Handle notification button press

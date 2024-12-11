@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +5,7 @@ import 'package:readify/homepage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:readify/registration.dart';
+import 'package:readify/root_page.dart';
 import 'package:readify/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
 
 void main() {
@@ -227,7 +227,7 @@ try {
     print("User created successfully");
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Home Page')),
+      MaterialPageRoute(builder: (context) => RootPage()),
     );
   } else {
     Fluttertoast.showToast(

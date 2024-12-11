@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:readify/homepage.dart';
+import 'package:readify/root_page.dart';
 import 'package:readify/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
 
 void main() {
@@ -59,7 +59,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   Widget _form() {
     return Padding(
-      padding: const EdgeInsets.all(22.0),
+      padding: const EdgeInsets.all(30.0),
       child: Center(
         child: SingleChildScrollView(
           child: Form(
@@ -74,10 +74,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const SizedBox(height: 15.0),
                 _inputfield("Password", passwordController, isPassword: true),
                 const SizedBox(height: 15.0),
-                _inputfield("Confirm Password", confirmpasswordController, isPassword: true),
-                const SizedBox(height: 15.0),
+                _inputfield("Confirm Password", confirmpasswordController, isPassword: true, isConfirmPassword: true),
+                const SizedBox(height: 20),
                 _registerButton(),
-                const SizedBox(height: 10.0),
+                const SizedBox(height: 100.0),
               ],
             ),
           ),
@@ -97,7 +97,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  Widget _inputfield(String hintText, TextEditingController controller, {bool isPassword = false, bool isEmail = false}) {
+  Widget _inputfield(String hintText, TextEditingController controller, {bool isPassword = false, bool isEmail = false, bool isConfirmPassword = false}) {
     var border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(10.0),
       borderSide: const BorderSide(
@@ -115,13 +115,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
         enabledBorder: border,
         focusedBorder: border,
       ),
-      obscureText: isPassword,
+      obscureText: isPassword || isConfirmPassword,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return '$hintText is a required field';
         }
         if (isEmail && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
           return 'Enter a valid email address';
+        }
+        if (isConfirmPassword && value != passwordController.text) {
+          return 'Passwords do not match';
         }
         return null;
       },
@@ -167,7 +170,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       if (user != null) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MyHomePage(title: '',)),
+          MaterialPageRoute(builder: (context) => RootPage()),
         );
       } else {
         Fluttertoast.showToast(

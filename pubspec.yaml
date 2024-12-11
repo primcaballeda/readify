@@ -40,6 +40,8 @@ dependencies:
   firebase_auth: ^5.3.3
   firebase_storage: ^12.3.6
   fluttertoast: ^8.2.8
+  carousel_slider: ^5.0.0
+  http: ^0.13.4
 
 dev_dependencies:
   flutter_test:
@@ -91,6 +93,17 @@ flutter:
     - family: Brittany
       fonts:
        - asset: fonts/BrittanySignature.ttf
+    - family: Josefin Sans Italic
+      fonts:
+      - asset: fonts/JosefinSans-Italic-VariableFont_wght.ttf
+    - family: Josefin Sans Bold
+      fonts:
+      - asset: fonts/JosefinSans-Bold.ttf
+    - family: Josefin Sans
+      fonts:
+      - asset: fonts/JosefinSans-VariableFont_wght.ttf
   assets:
     - assets/logo.png
+    - assets/notif_bell.png
     - assets/login_logo.png
+    - assets/

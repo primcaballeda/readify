@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:readify/star_rating.dart';
-import 'package:readify/view_book.dart';
+import 'package:readify/book_search.dart';
 
-class AddReview extends StatefulWidget {
-    final ViewBook book;
+class AddingReview extends StatefulWidget {
+  final Book book;  // The book passed from the BookSearch screen
 
-  const AddReview({Key? key, required this.book}) : super(key: key);
+  const AddingReview({super.key, required this.book});
 
   @override
-  State<AddReview> createState() => _AddReviewState();
+  State<AddingReview> createState() => _AddingReviewState();
 }
 
-class _AddReviewState extends State<AddReview> {
+class _AddingReviewState extends State<AddingReview> {
   final TextEditingController _reviewController = TextEditingController();
 
+  // Function to handle the submission of the review
   void _submitReview() {
     final reviewText = _reviewController.text;
 
@@ -22,9 +23,11 @@ class _AddReviewState extends State<AddReview> {
         const SnackBar(content: Text('Please write a review before submitting.')),
       );
     } else {
+      // Handle the review (save to a database, server, or display on the screen)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Review for "${widget.book.title}": $reviewText')),
       );
+      // Clear the text field after submitting the review
       _reviewController.clear();
     }
   }

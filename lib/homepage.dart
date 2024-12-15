@@ -3,23 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:http/http.dart' as http;
 import 'package:readify/book_search.dart';
-import 'package:readify/view_book.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomePage(title: 'Home Page'),
-    );
-  }
-}
+import 'view_book.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.title}) : super(key: key);
@@ -37,7 +21,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    fetchTopBooks();
+    fetchSelectedBooks();
   }
 
   @override
@@ -49,11 +33,11 @@ class _HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Expanded(child: buildBookCoverCard(bookCovers[i]['thumbnail'])),
+              Expanded(child: buildBookCoverCard(bookCovers[i])),
               if (i + 1 < bookCovers.length)
-                Expanded(child: buildBookCoverCard(bookCovers[i + 1]['thumbnail'])),
+                Expanded(child: buildBookCoverCard(bookCovers[i + 1])),
               if (i + 2 < bookCovers.length)
-                Expanded(child: buildBookCoverCard(bookCovers[i + 2]['thumbnail'])),
+                Expanded(child: buildBookCoverCard(bookCovers[i + 2])),
             ],
           ),
         );
@@ -71,7 +55,9 @@ class _HomePageState extends State<HomePage> {
       body: Padding(
         padding: const EdgeInsets.only(top: 30.0, left: 10, right: 10),
         child: isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFBEBE)),
+            ))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -84,8 +70,7 @@ class _HomePageState extends State<HomePage> {
                       color: Color(0x80953154),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  // Wrap CarouselSlider inside SingleChildScrollView
+                  const SizedBox(height: 10.0),
                   SingleChildScrollView(
                     child: CarouselSlider(
                       items: itemTriples,
@@ -109,25 +94,27 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Grid view for reviews using GridView.count
-                  Expanded(
-                    child: GridView.count(
-                      primary: false,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      crossAxisCount: 2,
-                      children: <Widget>[
-                        buildReviewCardPlaceholder(),
-                        buildReviewCardPlaceholder(),
-                        buildReviewCardPlaceholder(),
-                        buildReviewCardPlaceholder(),
-                        buildReviewCardPlaceholder(),
-                        buildReviewCardPlaceholder(),
-                      ],
-                    ),
-                  ),
+                  
+              // Grid view for reviews using GridView.count
+              Expanded(
+                child: GridView.count(
+                  primary: true,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  crossAxisCount: 2,
+                  children: <Widget>[
+                    buildReviewCardPlaceholder(),
+                    buildReviewCardPlaceholder(),
+                    buildReviewCardPlaceholder(),
+                    buildReviewCardPlaceholder(),
+                    buildReviewCardPlaceholder(),
+                    buildReviewCardPlaceholder(),
+                  ],
+                ),
+              ),
                 ],
               ),
+              
       ),
       floatingActionButton: FloatingActionButton(
         foregroundColor: Theme.of(context).colorScheme.onTertiaryContainer,
@@ -143,8 +130,103 @@ class _HomePageState extends State<HomePage> {
         },
         child: const Icon(Icons.add, size: 30, color: Color(0xFF953154)),
       ),
+    
+
     );
   }
+
+  Widget buildBookCoverCard(Map<String, dynamic> book) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to ViewBook with the selected book details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ViewBook(
+              title: book['title'],
+              author: book['author'],
+              imageUrl: book['imageUrl'],
+              description: book['description'],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        child: Card(
+          elevation: 4,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              image: DecorationImage(
+                image: NetworkImage(book['imageUrl']),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> fetchSelectedBooks() async {
+    const List<String> bookTitles = [
+      'The Great Gatsby',
+      '1984',
+      'Pride and Prejudice',
+      'Moby Dick',
+      'War and Peace',
+      'To Kill a Mockingbird',
+    ];
+
+    List<Map<String, dynamic>> fetchedBooks = [];
+
+    for (String title in bookTitles) {
+      final response = await http.get(Uri.parse(
+          'https://openlibrary.org/search.json?title=${Uri.encodeQueryComponent(title)}'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        final books = data['docs'];
+
+        if (books.isNotEmpty) {
+          final book = books[0];
+
+          // Fetch detailed book information
+          final bookDetailsResponse = await http.get(Uri.parse(
+              'https://openlibrary.org${book['key']}.json'));
+
+          if (bookDetailsResponse.statusCode == 200) {
+            final bookDetails = json.decode(bookDetailsResponse.body);
+
+            fetchedBooks.add({
+              'title': book['title'],
+              'author': book['author_name'] != null &&
+                      book['author_name'].isNotEmpty
+                  ? book['author_name'][0]
+                  : 'Unknown Author',
+              'imageUrl': book['cover_i'] != null
+                  ? 'https://covers.openlibrary.org/b/id/${book['cover_i']}-L.jpg'
+                  : 'https://via.placeholder.com/150',
+              'description': bookDetails['description'] ??
+                  'No description available', // Fallback description
+            });
+          }
+        }
+      }
+    }
+
+    setState(() {
+      bookCovers = fetchedBooks;
+      isLoading = false;
+    });
+  }
+}
 Widget buildReviewCardPlaceholder() {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,83 +355,4 @@ Widget buildReviewCardPlaceholder() {
       ),
     ],
   );
-}
-
-
-
-  Widget buildBookCoverCard(String bookCoverUrl) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ViewBook()),
-        );
-      },
-      child:
-         Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible( // Use Flexible to allow the image to adjust
-                child: Container(
-                  width: 100,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: Image.network(
-                      bookCoverUrl,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.image_not_supported,
-                            size: 100, color: Colors.grey);
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      
-    );
-  }
-
-  Future<void> fetchTopBooks() async {
-    const String url = 'https://openlibrary.org/search.json?q=top+books&limit=6';
-
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List items = data['docs'];
-
-        setState(() {
-          bookCovers = items.map((item) {
-            return {
-              'thumbnail': item['cover_i'] != null
-                  ? 'https://covers.openlibrary.org/b/id/${item['cover_i']}-M.jpg'
-                  : 'https://via.placeholder.com/150',
-            };
-          }).toList();
-          isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load books');
-      }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      print('Error fetching books: $e');
-    }
-  }
 }

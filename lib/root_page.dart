@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:readify/library.dart';
+import 'package:readify/notifications.dart';
 import 'package:readify/profile.dart';
 import 'package:readify/homepage.dart';
 
@@ -30,15 +31,15 @@ class RootPage extends StatefulWidget {
   ];
 
   final List<String> imageList = [
-    'assets/home.png', 
-    'assets/library.png',  
-    'assets/person.png',  
+    'assets/home.png',
+    'assets/library.png',
+    'assets/person.png',
   ];
 
   final List<String> imageListSelected = [
-    'assets/chome.png', 
-    'assets/clibrary.png',  
-    'assets/cperson.png',  
+    'assets/chome.png',
+    'assets/clibrary.png',
+    'assets/cperson.png',
   ];
 
   final List<String> titleList = [
@@ -71,36 +72,36 @@ class _RootPageState extends State<RootPage> {
         title: Padding(
           padding: const EdgeInsets.only(left: 2),
           child: SizedBox(
-            width: 280, // Adjust the width as needed
+            width: 280,
             child: SizedBox(
-              height: 50, // Set the height of the TextField
+              height: 50,
               child: TextField(
-              style: const TextStyle(color: Color(0XFFFFD4D4)),
-              decoration: const InputDecoration(
-                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-                hintText: 'Search for books or people',
-                hintStyle: TextStyle(color: Color(0x7F953154)),
-                border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                style: const TextStyle(color: Color(0XFFFFD4D4)),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                  hintText: 'Search for books or people',
+                  hintStyle: TextStyle(color: Color(0x7F953154)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    borderSide: BorderSide(
+                      color: Color(0xFFFFD4D4),
+                      width: 3.0,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    borderSide: BorderSide(
+                      color: Color(0xFFFFD4D4),
+                      width: 3.0,
+                    ),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                borderSide: BorderSide(
-                  color: Color(0xFFFFD4D4), // Color for the border
-                  width: 3.0, // Adjust width as needed
-                ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                borderSide: BorderSide(
-                  color: Color(0xFFFFD4D4), // Color for the border when focused
-                  width: 3.0, // Adjust width as needed
-                ),
-                ),
-              ),
-              onChanged: (value) {
-                // Perform search functionality here
-              },
+                onChanged: (value) {
+                  // Perform search functionality here
+                },
               ),
             ),
           ),
@@ -115,7 +116,10 @@ class _RootPageState extends State<RootPage> {
                 height: 35,
               ),
               onPressed: () {
-                // Handle notification button press
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Notifications()),
+                );
               },
             ),
           ),
@@ -131,8 +135,8 @@ class _RootPageState extends State<RootPage> {
             BottomNavigationBarItem(
               icon: Image.asset(
                 _bottomNavIndex == index ? widget.imageListSelected[index] : icon,
-                width: 24,  // Set the width of the image icon
-                height: 24, // Set the height of the image icon
+                width: 24,
+                height: 24,
               ),
               label: widget.titleList[index],
             ),

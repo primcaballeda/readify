@@ -26,38 +26,16 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> itemTriples = [];
-    if (bookCovers.isNotEmpty) {
-      for (int i = 0; i < bookCovers.length; i += 3) {
-        itemTriples.add(
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Expanded(child: buildBookCoverCard(bookCovers[i])),
-              if (i + 1 < bookCovers.length)
-                Expanded(child: buildBookCoverCard(bookCovers[i + 1])),
-              if (i + 2 < bookCovers.length)
-                Expanded(child: buildBookCoverCard(bookCovers[i + 2])),
-            ],
-          ),
-        );
-      }
-    } else {
-      itemTriples.add(
-        const Center(
-          child: Text('No books available.'),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFE8),
       body: Padding(
         padding: const EdgeInsets.only(top: 30.0, left: 10, right: 10),
         child: isLoading
-            ? const Center(child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFBEBE)),
-            ))
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFBEBE)),
+                ),
+              )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -70,20 +48,23 @@ class _HomePageState extends State<HomePage> {
                       color: Color(0x80953154),
                     ),
                   ),
-                  const SizedBox(height: 10.0),
-                  SingleChildScrollView(
-                    child: CarouselSlider(
-                      items: itemTriples,
-                      options: CarouselOptions(
-                        autoPlay: false,
-                        enlargeCenterPage: true,
-                        viewportFraction: 0.9,
-                        aspectRatio: 2.0,
-                        height: 150,
+                  const SizedBox(height: 5.0), // Reduced gap
+                  Expanded(
+                    flex: 0, // Make sure the carousel takes less space
+                    child: SingleChildScrollView(
+                      child: CarouselSlider(
+                        items: buildBookRows(),
+                        options: CarouselOptions(
+                          autoPlay: false,
+                          enlargeCenterPage: true,
+                          viewportFraction: 0.9,
+                          aspectRatio: 2.0,
+                          height: 150, // Carousel height
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 20), // Reduced gap
                   const Text(
                     'Popular Reviews',
                     style: TextStyle(
@@ -93,28 +74,23 @@ class _HomePageState extends State<HomePage> {
                       color: Color(0x80953154),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  
-              // Grid view for reviews using GridView.count
-              Expanded(
-                child: GridView.count(
-                  primary: true,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  crossAxisCount: 2,
-                  children: <Widget>[
-                    buildReviewCardPlaceholder(),
-                    buildReviewCardPlaceholder(),
-                    buildReviewCardPlaceholder(),
-                    buildReviewCardPlaceholder(),
-                    buildReviewCardPlaceholder(),
-                    buildReviewCardPlaceholder(),
-                  ],
-                ),
-              ),
+                  const SizedBox(height: 10), // Reduced gap
+                  Expanded(
+                    flex: 1, // Make sure the grid of reviews takes the remaining space
+                    child: GridView.builder(
+                      itemCount: 6, // Placeholder count
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      itemBuilder: (context, index) {
+                        return buildReviewCardPlaceholder();
+                      },
+                    ),
+                  ),
                 ],
               ),
-              
       ),
       floatingActionButton: FloatingActionButton(
         foregroundColor: Theme.of(context).colorScheme.onTertiaryContainer,
@@ -130,15 +106,34 @@ class _HomePageState extends State<HomePage> {
         },
         child: const Icon(Icons.add, size: 30, color: Color(0xFF953154)),
       ),
-    
-
     );
   }
 
+  /// Build book cover rows for Carousel
+  List<Widget> buildBookRows() {
+    List<Widget> rows = [];
+    for (int i = 0; i < bookCovers.length; i += 3) {
+      rows.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(child: buildBookCoverCard(bookCovers[i])),
+            if (i + 1 < bookCovers.length)
+              Expanded(child: buildBookCoverCard(bookCovers[i + 1])),
+            if (i + 2 < bookCovers.length)
+              Expanded(child: buildBookCoverCard(bookCovers[i + 2])),
+          ],
+        ),
+      );
+    }
+    return rows;
+  }
+
+  /// Book Cover Card Widget
   Widget buildBookCoverCard(Map<String, dynamic> book) {
     return GestureDetector(
       onTap: () {
-        // Navigate to ViewBook with the selected book details
+        if (!mounted) return;
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -173,6 +168,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  /// Fetch book data concurrently
   Future<void> fetchSelectedBooks() async {
     const List<String> bookTitles = [
       'The Great Gatsby',
@@ -183,176 +179,104 @@ class _HomePageState extends State<HomePage> {
       'To Kill a Mockingbird',
     ];
 
-    List<Map<String, dynamic>> fetchedBooks = [];
+    List<Future<Map>> fetchTasks = bookTitles.map((title) async {
+      try {
+        final response = await http
+            .get(Uri.parse(
+                'https://openlibrary.org/search.json?title=${Uri.encodeQueryComponent(title)}'))
+            .timeout(const Duration(seconds: 10));
 
-    for (String title in bookTitles) {
-      final response = await http.get(Uri.parse(
-          'https://openlibrary.org/search.json?title=${Uri.encodeQueryComponent(title)}'));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final books = data['docs'];
+          if (books.isNotEmpty) {
+            final book = books[0];
+            final detailsResponse = await http
+                .get(Uri.parse('https://openlibrary.org${book['key']}.json'))
+                .timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        final books = data['docs'];
-
-        if (books.isNotEmpty) {
-          final book = books[0];
-
-          // Fetch detailed book information
-          final bookDetailsResponse = await http.get(Uri.parse(
-              'https://openlibrary.org${book['key']}.json'));
-
-          if (bookDetailsResponse.statusCode == 200) {
-            final bookDetails = json.decode(bookDetailsResponse.body);
-
-            fetchedBooks.add({
-              'title': book['title'],
-              'author': book['author_name'] != null &&
-                      book['author_name'].isNotEmpty
-                  ? book['author_name'][0]
-                  : 'Unknown Author',
-              'imageUrl': book['cover_i'] != null
-                  ? 'https://covers.openlibrary.org/b/id/${book['cover_i']}-L.jpg'
-                  : 'https://via.placeholder.com/150',
-              'description': bookDetails['description'] ??
-                  'No description available', // Fallback description
-            });
+            if (detailsResponse.statusCode == 200) {
+              final bookDetails = json.decode(detailsResponse.body);
+              return {
+                'title': book['title'],
+                'author': book['author_name']?.isNotEmpty ?? false
+                    ? book['author_name'][0]
+                    : 'Unknown Author',
+                'imageUrl': book['cover_i'] != null
+                    ? 'https://covers.openlibrary.org/b/id/${book['cover_i']}-L.jpg'
+                    : 'https://via.placeholder.com/150',
+                'description': bookDetails['description'] ?? 'No description available',
+              };
+            }
           }
         }
+      } catch (e) {
+        debugPrint('Error fetching book: $title -> $e');
       }
-    }
+      return {};
+    }).toList();
 
+    final results = await Future.wait(fetchTasks);
+
+    if (!mounted) return;
     setState(() {
-      bookCovers = fetchedBooks;
+      bookCovers = results.where((book) => book.isNotEmpty).cast<Map<String, dynamic>>().toList();
       isLoading = false;
     });
   }
-}
-Widget buildReviewCardPlaceholder() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Container for the card (left: book cover, right: title, author, stars)
-      Container(
-        padding: const EdgeInsets.all(2),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Left section: Book cover placeholder
-            Container(
-              width: 80,
-              height: 110,
-              decoration: BoxDecoration(
-                color: Colors.grey[300], // Placeholder color
-                borderRadius: BorderRadius.circular(10),
+
+  /// Review Card Placeholder
+  Widget buildReviewCardPlaceholder() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(2),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 80,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-            ),
-            const SizedBox(width: 5), // Space between image and text
-
-            // Right section: Text content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // User avatar and username in a Row
-                  Row(
-                    children: [
-                      // Avatar circle
-                      Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300], // Placeholder color
-                          borderRadius: BorderRadius.circular(50),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(50),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 5), // Space between avatar and username
-
-                      // Username text
-                      const Text(
-                        'yanna',
-                        style: TextStyle(
-                          fontFamily: 'Josefin Sans Bold',
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 2, 2, 2),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10), // Space between username and title
-
-                  // Book title and author
-                  const Text(
-                    'The Silence',
-                    style: TextStyle(
-                      fontFamily: 'Josefin Sans Bold',
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF953154),
+                        const SizedBox(width: 5),
+                        const Text('yanna', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                      ],
                     ),
-                  ),
-                  const Text(
-                    'by Author\'s name',
-                    style: TextStyle(
-                      fontFamily: 'Josefin Sans',
-                      fontSize: 8,
-                      fontWeight: FontWeight.normal,
-                      color: Color.fromARGB(255, 0, 0, 0),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'The Silence',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  const SizedBox(height: 18), // Space between text and description
-
-                  // Rating stars
-                  Row(
-                    children: List.generate(5, (index) {
-                      return Icon(
-                        index < 3 ? Icons.star : Icons.star_border,
-                        color: index < 3 ? Colors.amber : Colors.grey,
-                        size: 15,
-                      );
-                    }),
-                  ),
-                ],
+                    const Text('by Author\'s name', style: TextStyle(fontSize: 8)),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-
-      const SizedBox(height: 8), // Space between the card and the description section
-
-      // Description
-      const Text(
-        'Aalalalla ansjsaa nd sjdnj dsdsds sd as njdws sjndjas',
-        style: TextStyle(
-          fontFamily: 'Josefin Sans',
-          fontSize: 10,
-          fontWeight: FontWeight.normal,
-          color: Color.fromARGB(255, 0, 0, 0),
-        ),
-      ),
-      const SizedBox(height: 8), // Space before hearts and likes section
-
-      // Hearts section
-      const Row(
-        children: [
-          Icon(
-            Icons.favorite_border,
-            color: Color(0xFF953154),
-            size: 10,
+            ],
           ),
-          SizedBox(width: 4),
-          Text(
-            '1,234 hearts',
-            style: TextStyle(
-              fontFamily: 'Josefin Sans',
-              fontSize: 10,
-              fontWeight: FontWeight.normal,
-              color: Color.fromARGB(255, 0, 0, 0),
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
+        ),
+        const SizedBox(height: 8),
+        const Text('Placeholder review text...', style: TextStyle(fontSize: 10)),
+      ],
+    );
+  }
 }

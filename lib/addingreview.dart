@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:readify/firestore.dart';
 import 'package:readify/star_rating.dart';
 import 'package:readify/book_search.dart';
 
@@ -12,26 +13,49 @@ class AddingReview extends StatefulWidget {
 }
 
 class _AddingReviewState extends State<AddingReview> {
+  
+  final FirestoreService firestoreService = FirestoreService();
   final TextEditingController _reviewController = TextEditingController();
 
-  // Function to handle the submission of the review
-  void _submitReview() {
-    final reviewText = _reviewController.text;
+  int _selectedRating = 0; // Store the selected star rating
 
-    if (reviewText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please write a review before submitting.')),
-      );
-    } else {
-      // Handle the review (save to a database, server, or display on the screen)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Review for "${widget.book.title}": $reviewText')),
-      );
-      // Clear the text field after submitting the review
-      _reviewController.clear();
-    }
+  // Callback to update the rating from StarRating widget
+  void _onRatingSelected(int rating) {
+    setState(() {
+      _selectedRating = rating;
+    });
   }
 
+
+  // Function to handle the submission of the review
+void _submitReview() async {
+    final reviewText = _reviewController.text;
+
+    if (reviewText.isEmpty || _selectedRating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Please select a rating and write a review before submitting.')),
+      );
+    } else {
+      await firestoreService.addReview(
+        widget.book.title,
+        widget.book.author,
+        reviewText,
+        _selectedRating, 
+        widget.book.imageUrl,
+        // Pass the star rating
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Review for "${widget.book.title}" submitted successfully!')),
+      );
+      _reviewController.clear();
+      setState(() {
+        _selectedRating = 0; // Reset the rating
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,7 +147,15 @@ class _AddingReviewState extends State<AddingReview> {
                 ],
               ),
               const SizedBox(height: 20.0), // Add spacing before star rating
-              const StarRating(), // Add the StarRating widget here
+              Align(
+                alignment: Alignment.centerLeft,
+                child: StarRating(
+                rating: _selectedRating, // Example rating
+                onRatingSelected: _onRatingSelected, // Callback
+                size: 35, // Adjust size
+                color: Color (0xFFFFBEBE), // Filled star color
+              ),
+              ), // Add the StarRating widget here
               const SizedBox(height: 20.0), // Add spacing after star rating
               const Center(
                 child: Text(

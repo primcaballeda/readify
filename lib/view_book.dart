@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:readify/add_review.dart';
 import 'package:readify/addingreview.dart';
 import 'package:readify/book_details.dart' as details;
+import 'package:readify/firestore.dart';
+import 'package:readify/star_rating.dart';
 
 class MyApp extends StatelessWidget {
   final details.Book book;
@@ -43,6 +45,15 @@ class ViewBook extends StatefulWidget {
 }
 
 class _ViewBookState extends State<ViewBook> {
+  final FirestoreService firestoreService = FirestoreService();
+  bool _isLiked = false;
+  int _selectedRating = 0;
+  void _onRatingSelected(int rating) {
+    setState(() {
+      _selectedRating = rating;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,7 +163,6 @@ class _ViewBookState extends State<ViewBook> {
                   ),
                 ),
               ),
-              // "Reviews" text added after the description box
               const Padding(
                 padding: EdgeInsets.only(top: 20.0, left: 25),
                 child: Align(
@@ -168,7 +178,6 @@ class _ViewBookState extends State<ViewBook> {
                   ),
                 ),
               ),
-              // Reviews section
               _reviewComment(),
               const Divider(
                 color: Color.fromARGB(46, 149, 49, 84),
@@ -177,7 +186,6 @@ class _ViewBookState extends State<ViewBook> {
                 endIndent: 0.0, // Add spacing on the right
               ),
               const SizedBox(height: 10),
-
               Container(
                 alignment: Alignment.center,
                 child: GestureDetector(
@@ -222,21 +230,20 @@ class _ViewBookState extends State<ViewBook> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Book Title and Author
-
-                    const Row(
+                    Row(
                       children: [
                         Padding(
-                          padding: EdgeInsets.only(top: 8.0),
+                          padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
-                            'To Kill A Mocking Bird',
-                            style: TextStyle(
+                            widget.title,
+                            style: const TextStyle(
                               fontFamily: 'Josefin Sans Regular',
                               fontSize: 20,
                             ),
                           ),
                         ),
-                        Spacer(),
-                        Padding(
+                        const Spacer(),
+                        const Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
@@ -249,8 +256,8 @@ class _ViewBookState extends State<ViewBook> {
                       ],
                     ),
                     const SizedBox(height: 1),
-                    const Text(
-                      'by Harper Lee',
+                    Text(
+                      'by ${widget.author}',
                       style: TextStyle(
                         fontFamily: 'Josefin Sans Regular',
                         fontWeight: FontWeight.w300,
@@ -264,7 +271,6 @@ class _ViewBookState extends State<ViewBook> {
                       indent: 0.0, // Add spacing on the left
                       endIndent: 0.0, // Add spacing on the right
                     ),
-
                     // Rating Stars
                     Row(
                       children: [
@@ -272,43 +278,72 @@ class _ViewBookState extends State<ViewBook> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: List.generate(5, (index) {
-                                return Icon(
-                                  index < 3 ? Icons.star : Icons.star_border,
-                                  color: const Color(0xFFFFBEBE),
-                                );
-                              }),
+                            Align(
+                              alignment: Alignment
+                                  .centerRight, // Align the stars to the left
+                              child: StarRating(
+                                rating: _selectedRating, // Example rating
+                                onRatingSelected: _onRatingSelected, // Callback
+                                size: 35, // Adjust size
+                                color: Color(0xFFFFBEBE), // Filled star color
+                              ),
                             ),
                             const SizedBox(height: 10),
                             // Rated Text
-                            const Align(
-                              alignment: Alignment.topLeft,
-                              child: Text(
-                                'Rated',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                ),
+                            Align(
+                              alignment: Alignment
+                                  .centerLeft, // Align the stars to the left
+                              child: StarRating(
+                                rating: _selectedRating, // Pass current rating
+                                onRatingSelected: (newRating) {
+                                  setState(() {
+                                    _selectedRating =
+                                        newRating; // Update the state
+                                  });
+                                },
+                                size: 35,
+                                color: const Color(0xFFFFBEBE),
                               ),
                             ),
                           ],
                         ),
-                        // Spacer to push the heart to the right
                         const Spacer(),
-                        // Heart Icon/Image
-                        const Column(
+                        Column(
                           children: [
                             Padding(
-                              padding: EdgeInsets.only(top: 8.0),
-                              child: Image(
-                                image: AssetImage('assets/heart.png'),
-                                width: 25,
-                                height: 25,
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: StatefulBuilder(
+                                builder: (context, setState) {
+                                  return IconButton(
+                                    icon: Image(
+                                      image: AssetImage(_isLiked
+                                          ? 'assets/cheart.png'
+                                          : 'assets/heart.png'),
+                                      width: 32,
+                                      height: 32,
+                                    ),
+                                    onPressed: () async {
+                                      setState(() {
+                                        _isLiked =
+                                            !_isLiked; // Toggle the liked state
+                                      });
+                                      if (_isLiked) {
+                                        // Replace with actual image URL
+
+                                        await firestoreService.addToLikedBooks(
+                                          widget.title,
+                                          widget.author,
+                                          widget.description,
+                                          widget.imageUrl,
+                                        );
+                                      }
+                                    },
+                                  );
+                                },
                               ),
                             ),
-                            SizedBox(height: 10),
-                            Text(
+                            const SizedBox(height: 10),
+                            const Text(
                               'Like',
                               style: TextStyle(
                                 fontSize: 14,
@@ -319,22 +354,16 @@ class _ViewBookState extends State<ViewBook> {
                         ),
                       ],
                     ),
-
-                    // Add Review Button
+                    const SizedBox(height: 16),
                     Align(
-                      alignment: Alignment
-                          .topLeft, // Ensures the entire block is aligned to the top-left
+                      alignment: Alignment.topLeft,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment
-                            .start, // Aligns the content inside the column to the left
-                        mainAxisSize:
-                            MainAxisSize.min, // Adjusts the column height
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Divider(
                             color: const Color(0xFF953154).withOpacity(0.5),
                             thickness: 1.0,
-                            indent: 0.0, // Add spacing on the left
-                            endIndent: 0.0, // Add spacing on the right
                           ),
                           TextButton.icon(
                             onPressed: () {
@@ -360,11 +389,69 @@ class _ViewBookState extends State<ViewBook> {
                               ),
                             ),
                           ),
-                          const SizedBox(
-                              height: 16), // Adds space between the buttons
+                          const SizedBox(height: 16),
+                          // Add to Reading List Button
                           TextButton.icon(
-                            onPressed: () {
-                              // Add to reading list logic here
+                            onPressed: () async {
+                              try {
+                                // Show a loading dialog to prevent multiple clicks
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (_) => const Center(
+                                    child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation(
+                                      Color(0xFFFFBEBE),
+                                    )),
+                                  ),
+                                );
+
+                                // Check if the book is already in the reading list
+                                bool isAlreadyAdded =
+                                    await firestoreService.isBookInReadingList(
+                                  widget.title,
+                                  widget.author,
+                                  widget.description,
+                                  widget.imageUrl,
+                                );
+
+                                // Close the loading dialog
+                                Navigator.pop(context);
+
+                                if (isAlreadyAdded) {
+                                  // Show "Already Added" dialog
+                                  await _showInfoDialog(
+                                    context,
+                                    'Already in Reading List',
+                                    '${widget.title} by ${widget.author} is already in your reading list.',
+                                  );
+                                } else {
+                                  // Add the book to the reading list
+                                  await firestoreService.addToReadingList(
+                                    widget.title,
+                                    widget.author,
+                                    widget.description,
+                                    widget.imageUrl,
+                                  );
+
+                                  // Show "Added" dialog
+                                  await _showInfoDialog(
+                                    context,
+                                    'Added to Reading List',
+                                    '${widget.title} by ${widget.author} has been added to your reading list.',
+                                  );
+                                }
+                              } catch (e) {
+                                // Close the loading dialog if an error occurs
+                                Navigator.pop(context);
+
+                                // Handle errors gracefully
+                                await _showInfoDialog(
+                                  context,
+                                  'Error',
+                                  'Something went wrong. Please try again later.',
+                                );
+                              }
                             },
                             icon: const Image(
                               image: AssetImage('assets/readinglist.png'),
@@ -399,91 +486,19 @@ class _ViewBookState extends State<ViewBook> {
     );
   }
 
-  Widget _reviewComment() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        children: [
-          // Example Review 1
-          _buildReview(
-            'John Doe',
-            'Amazing book! A true classic. Highly recommended.',
-            4.5,
-          ),
-          const SizedBox(height: 10),
-          // Example Review 2
-          _buildReview(
-            'Jane Smith',
-            'A touching story, very well written. 9/10.',
-            4.0,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReview(String name, String review, double rating) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      padding: const EdgeInsets.all(10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar (Replace with actual avatar image if needed)
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.grey.shade300,
-            child: const Icon(Icons.person, color: Colors.white),
-          ),
-          const SizedBox(width: 10),
-          // Review text
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF953154),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
-                          children: List.generate(5, (index) {
-                            return Icon(
-                              index < rating ? Icons.star : Icons.star_border,
-                              color: const Color(0xFFFFBEBE),
-                              size: 18,
-                            );
-                          }),
-                        ),
-                        const SizedBox(width: 10),
-                        const Icon(
-                          Icons.favorite,
-                          color: Color(0xFFFFD4D4),
-                          size: 18,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  review,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 5),
-              ],
-            ),
+  Future<void> _showInfoDialog(
+      BuildContext context, String title, String content) {
+    return showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -496,7 +511,6 @@ class _ViewBookState extends State<ViewBook> {
       child: Stack(
         alignment: Alignment.topCenter,
         children: [
-          // Blurred background image
           ClipRect(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -530,6 +544,16 @@ class _ViewBookState extends State<ViewBook> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _reviewComment() {
+    return const Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Text(
+        'This is a great book! I enjoyed reading it. The characters were relatable, and the plot kept me engaged.',
+        style: TextStyle(fontSize: 14, color: Colors.black),
       ),
     );
   }

@@ -144,6 +144,16 @@ class _BookSearchState extends State<BookSearch> {
                     color: Color(0xFF953154),
                   ),
                 ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                  color: Color(0xFF953154),
+                  ),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                  color: Color(0xFF953154),
+                  ),
+                ),
               ),
             ),
           ),

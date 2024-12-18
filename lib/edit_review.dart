@@ -1,44 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:readify/firestore.dart';
+import 'package:readify/library.dart';
 import 'package:readify/star_rating.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: EditReview(),
-    );
-  }
-}
-
 class EditReview extends StatefulWidget {
-  const EditReview({super.key});
+  final Book books;
+  final String reviewDocId;
+
+  const EditReview({
+    Key? key,
+    required this.books,
+    required this.reviewDocId,
+  }) : super(key: key);
 
   @override
   State<EditReview> createState() => EditReviewState();
 }
 
 class EditReviewState extends State<EditReview> {
+  final FirestoreService firestoreService = FirestoreService();
+  final TextEditingController _reviewController = TextEditingController();
+  int _selectedRating = 0;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingReview();
+  }
+
+  Future<void> _loadExistingReview() async {
+    final review = await firestoreService.fetchReview(widget.reviewDocId);
+    setState(() {
+      _reviewController.text = review['review'] ?? '';
+      _selectedRating = review['rating'] ?? 0;
+    });
+  }
+
+  void _onRatingSelected(int rating) {
+    setState(() {
+      _selectedRating = rating;
+    });
+  }
+
+  void _editReview() async {
+    final reviewText = _reviewController.text;
+
+    if (reviewText.isEmpty || _selectedRating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a rating and write a review before submitting.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    await firestoreService.editReview(
+      widget.reviewDocId,
+      widget.books.title,
+      widget.books.author,
+      widget.books.imageUrl,
+      reviewText,
+      _selectedRating,
+    );
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Review for "${widget.books.title}" updated successfully!')),
+    );
+ // Close the EditReview page after successful update
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         flexibleSpace: Container(
-          color: const Color(0xFFFFD4D4).withOpacity(0.5),
+          color: const Color(0xFFFFFFE8),
         ),
         leading: Padding(
           padding: const EdgeInsets.only(left: 10.0),
           child: IconButton(
             icon: const Icon(Icons.close, color: Color(0xFF953154)),
             onPressed: () {
-              Navigator.pop(context); // Close the search page
+              Navigator.pop(context); // Close the EditReview page
             },
           ),
         ),
@@ -53,8 +104,8 @@ class EditReviewState extends State<EditReview> {
         actions: [
           IconButton(
             icon: const Icon(Icons.check, color: Color(0xFF953154)),
-            onPressed: () {},
-          )
+            onPressed: _isSubmitting ? null : _editReview, // Disable button during submission
+          ),
         ],
       ),
       backgroundColor: const Color(0xFFFFFFE8),
@@ -67,94 +118,55 @@ class EditReviewState extends State<EditReview> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Card(
-                    color: Color(0xFFFFD4D4),
-                    child: SizedBox(
-                      width: 100.0,
-                      height: 150.0,
-                    ),
+                  Image.network(
+                    widget.books.imageUrl,
+                    width: 100,
+                    height: 150,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.error, size: 150);
+                    },
                   ),
-                  const SizedBox(width: 16.0), // Spacing between the card and the text
+                  const SizedBox(width: 16.0),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        const Text(
-                          'Title',
-                          style: TextStyle(
+                        Text(
+                          widget.books.title,
+                          style: const TextStyle(
                             fontFamily: 'Josefin Sans Regular',
                             fontSize: 20,
                             color: Color(0xFF953154),
                           ),
                         ),
-                        const SizedBox(height: 5.0), // Spacing between the two texts
-                        const Text(
-                          'by Author name',
-                          style: TextStyle(
+                        const SizedBox(height: 5.0),
+                        Text(
+                          'by ${widget.books.author}',
+                          style: const TextStyle(
                             fontFamily: 'Josefin Sans Regular',
                             fontSize: 15,
                             color: Color(0xFF953154),
                           ),
                         ),
                         const SizedBox(height: 50),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end, // Align the content to the right
-                          children: [
-                            Column(
-                              mainAxisSize: MainAxisSize.min, // Ensure it wraps tightly around the content
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 20.0), // Space between icon and text
-                                  child: Image.asset(
-                                    'assets/heart.png',
-                                    width: 34.0,
-                                    height: 34.0,
-                                    color: const Color(0xFFFFD4D4),
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                GestureDetector(
-                                  onTap: () {
-                                    // Add your onTap code here
-                                  },
-                                  child: const Padding(
-                                    padding: EdgeInsets.only(right: 20.0),
-                                    child: Text(
-                                      'Like',
-                                      style: TextStyle(
-                                        fontFamily: 'Josefin Sans Regular',
-                                        fontSize: 15,
-                                        color: Color(0xFF953154),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20.0), // Add spacing before the divider
                       ],
                     ),
                   ),
                 ],
               ),
-              const Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: Color(0xFF953154),
-                      thickness: 1.0,
-                      indent: 0.0, // Add spacing on the left
-                      endIndent: 0.0, // Add spacing on the right
-                    ),
-                  ),
-                  SizedBox(width: 4.0), // Space matching the heart icon width
-                ],
+              const SizedBox(height: 20.0),
+              const Divider(
+                color: Color(0xFF953154),
+                thickness: 1.0,
               ),
-              const SizedBox(height: 20.0), // Add spacing before star rating
-              const StarRating(), // Add the StarRating widget here
-              const SizedBox(height: 20.0), // Add spacing after star rating
+              const SizedBox(height: 20.0),
+              StarRating(
+                rating: _selectedRating,
+                onRatingSelected: _onRatingSelected,
+                color: const Color(0xFFFFBEBE),
+              ),
+              const SizedBox(height: 20.0),
               const Center(
                 child: Text(
                   'Rate this book',
@@ -166,18 +178,9 @@ class EditReviewState extends State<EditReview> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: Color.fromARGB(255, 122, 117, 119),
-                      thickness: 1.0,
-                      indent: 0.0, // Add spacing on the left
-                      endIndent: 0.0, // Add spacing on the right
-                    ),
-                  ),
-                  SizedBox(width: 4.0), // Space matching the heart icon width
-                ],
+              const Divider(
+                color: Color.fromARGB(255, 122, 117, 119),
+                thickness: 1.0,
               ),
               const SizedBox(height: 10),
               const Text(
@@ -190,6 +193,7 @@ class EditReviewState extends State<EditReview> {
               ),
               const SizedBox(height: 10),
               TextField(
+                controller: _reviewController,
                 maxLines: 10,
                 decoration: InputDecoration(
                   hintText: 'Write your review here',
@@ -220,12 +224,8 @@ class EditReviewState extends State<EditReview> {
                     ),
                   ),
                 ),
-              )
-              
-              
+              ),
             ],
-            
-            
           ),
         ),
       ),

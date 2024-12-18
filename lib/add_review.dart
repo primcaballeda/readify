@@ -1,31 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:readify/firestore.dart';
 import 'package:readify/star_rating.dart';
 import 'package:readify/view_book.dart';
 
 class AddReview extends StatefulWidget {
-    final ViewBook book;
+  final ViewBook book;
 
-  const AddReview({Key? key, required this.book}) : super(key: key);
+  const AddReview({
+    Key? key,
+    required this.book,
+  }) : super(key: key);
 
   @override
   State<AddReview> createState() => _AddReviewState();
 }
 
 class _AddReviewState extends State<AddReview> {
+  final FirestoreService firestoreService = FirestoreService();
   final TextEditingController _reviewController = TextEditingController();
 
-  void _submitReview() {
+  int _selectedRating = 0; // Store the selected star rating
+
+  // Callback to update the rating from StarRating widget
+  void _onRatingSelected(int rating) {
+    setState(() {
+      _selectedRating = rating;
+    });
+  }
+
+  // Submit the review to Firestore
+  void _submitReview() async {
     final reviewText = _reviewController.text;
 
-    if (reviewText.isEmpty) {
+    if (reviewText.isEmpty || _selectedRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please write a review before submitting.')),
+        const SnackBar(
+            content: Text('Please select a rating and write a review before submitting.')),
       );
     } else {
+      await firestoreService.addReview(
+        widget.book.title,
+        widget.book.author,
+        reviewText,
+        _selectedRating, 
+        widget.book.imageUrl,
+        // Pass the star rating
+      );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Review for "${widget.book.title}": $reviewText')),
+        SnackBar(
+            content: Text(
+                'Review for "${widget.book.title}" submitted successfully!')),
       );
       _reviewController.clear();
+      setState(() {
+        _selectedRating = 0; // Reset the rating
+      });
     }
   }
 
@@ -80,7 +109,7 @@ class _AddReviewState extends State<AddReview> {
                       return const Icon(Icons.error, size: 150);
                     },
                   ),
-                  const SizedBox(width: 16.0), // Spacing between the image and the text
+                  const SizedBox(width: 16.0),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,47 +131,42 @@ class _AddReviewState extends State<AddReview> {
                             color: Color(0xFF953154),
                           ),
                         ),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ],
               ),
-              const Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: Color(0xFF953154),
-                      thickness: 1.0,
-                    ),
-                  ),
-                  SizedBox(width: 4.0), // Space matching the heart icon width
-                ],
+              const SizedBox(height: 20.0),
+              const Divider(
+                color: Color(0xFF953154),
+                thickness: 1.0,
               ),
-              const SizedBox(height: 20.0), // Add spacing before star rating
-              const StarRating(), // Add the StarRating widget here
-              const SizedBox(height: 20.0), // Add spacing after star rating
-              const Center(
+              const SizedBox(height: 20.0),
+              // StarRating widget with callback
+              Align(
+              alignment: Alignment.centerRight, // Align the stars to the left
+              child: StarRating(
+                rating: _selectedRating, // Example rating
+                onRatingSelected: _onRatingSelected, // Callback
+                size: 35, // Adjust size
+                color: Color (0xFFFFBEBE), // Filled star color
+              ),
+            ),
+              const SizedBox(height: 10),
+              Center(
                 child: Text(
-                  'Rate this book',
-                  style: TextStyle(
+                  'Rate', // Display selected rating
+                  style: const TextStyle(
                     fontFamily: 'Josefin Sans Regular',
                     fontSize: 16,
-                    color: Color.fromARGB(255, 0, 0, 0),
+                    color: Color(0xFF953154),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              const Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: Color.fromARGB(255, 122, 117, 119),
-                      thickness: 1.0,
-                    ),
-                  ),
-                  SizedBox(width: 4.0), // Space matching the heart icon width
-                ],
+              const SizedBox(height: 20.0),
+              const Divider(
+                color: Color.fromARGB(255, 122, 117, 119),
+                thickness: 1.0,
               ),
               const SizedBox(height: 10),
               const Text(
@@ -187,6 +211,7 @@ class _AddReviewState extends State<AddReview> {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

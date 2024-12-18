@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -30,6 +31,8 @@ class RegistrationPage extends StatefulWidget {
 class _RegistrationPageState extends State<RegistrationPage> {
   final FirebaseAuthServices _firebaseAuthServices = FirebaseAuthServices();
   final _formKey = GlobalKey<FormState>();
+  
+  TextEditingController fullnameController = TextEditingController();
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmpasswordController = TextEditingController();
@@ -37,6 +40,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   @override
   void dispose() {
+    fullnameController.dispose();
     usernameController.dispose();
     passwordController.dispose();
     confirmpasswordController.dispose();
@@ -68,6 +72,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _plogo(),
+                
+                _inputfield("Fullname", fullnameController),
+                const SizedBox(height: 15.0),
                 _inputfield("Username", usernameController),
                 const SizedBox(height: 15.0),
                 _inputfield("Email", emailController, isEmail: true),
@@ -158,32 +165,41 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  Future<void> _signUp() async {
-    String username = usernameController.text;
-    String email = emailController.text;
-    String password = passwordController.text;
-    String confirmPassword = confirmpasswordController.text;
+ Future<void> _signUp() async {
+  String fullname = fullnameController.text;
+  String username = usernameController.text;
+  String email = emailController.text;
+  String password = passwordController.text;
 
-    try {
-      User? user = await _firebaseAuthServices.signUpWithEmailAndPassword(email, password);
+  try {
+    // Use the modified sign-up method that includes full name and username
+    User? user = await _firebaseAuthServices.signUpWithEmailAndPassword(
+      email, 
+      password, 
+      fullname, 
+      username,
+    );
 
-      if (user != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => RootPage()),
-        );
-      } else {
-        Fluttertoast.showToast(
-          msg: "Account creation failed. Please try again.",
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: const Color.fromARGB(157, 0, 0, 0),
-          gravity: ToastGravity.SNACKBAR,
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+    if (user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => RootPage()),
+      );
+    } else {
+      // Display error if user creation fails
+      Fluttertoast.showToast(
+        msg: "Account creation failed. Please try again.",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: const Color.fromARGB(157, 0, 0, 0),
+        gravity: ToastGravity.SNACKBAR,
       );
     }
+  } catch (e) {
+    // Show error message if something goes wrong during the sign-up process
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.toString())),
+    );
   }
+}
+
 }

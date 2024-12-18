@@ -13,14 +13,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String _fullname = '';
   String _username = '';
   String _email = '';
-  String _password = ''; // You can handle password changes separately
   bool _isLoading = true;
 
+  // Create TextEditingControllers
+  final TextEditingController _fullnameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
   final FirestoreService firestoreService = FirestoreService();
+
   @override
   void initState() {
     super.initState();
     _fetchUserProfile();
+  }
+
+  @override
+  void dispose() {
+    _fullnameController.dispose();
+    _usernameController.dispose();
+    _emailController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchUserProfile() async {
@@ -34,15 +47,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     // Fetch user profile from Firestore using the userId
-    Map<String, String> userProfile =
-        await firestoreService.getUserProfile(userId);
+    Map<String, String> userProfile = await firestoreService.getUserProfile(userId);
 
     setState(() {
-      
-      _email = userProfile['email'] ?? 'Email not found';  
+      _email = userProfile['email'] ?? 'Email not found';
       _fullname = userProfile['fullname'] ?? 'Full Name not found';
       _username = userProfile['username'] ?? 'Username not found';
       _isLoading = false;
+
+      // Update the controllers with the fetched data
+      _fullnameController.text = _fullname;
+      _usernameController.text = _username;
+      _emailController.text = _email;
     });
   }
 
@@ -50,29 +66,37 @@ class _EditProfilePageState extends State<EditProfilePage> {
     User? user = FirebaseAuth.instance.currentUser;
     return user?.uid;
   }
+Future<void> _saveProfileChanges() async {
+  String? userId = _getCurrentUserId();
 
-  Future<void> _saveProfileChanges() async {
-    String? userId = _getCurrentUserId();
-
-    if (userId == null) {
-      print('User not authenticated');
-      return;
-    }
-
-    try {
-      // Update the user profile with the new data
-      await firestoreService.updateUserProfile(userId, _fullname, _username, _email);
-      
-      // Notify user of successful update
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile updated successfully')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating profile: $e')),
-      );
-    }
+  if (userId == null) {
+    print('User not authenticated');
+    return;
   }
+
+  try {
+    // Update the user profile with the new data
+    await firestoreService.updateUserProfile(
+      userId,
+      _fullnameController.text,
+      _usernameController.text,
+      _emailController.text,
+    );
+
+    // Notify user of successful update
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Profile updated successfully')),
+    );
+
+    // Refresh the profile data after update
+    await _fetchUserProfile();  // Re-fetch the updated profile data
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error updating profile: $e')),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +145,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 _isLoading
                     ? const CircularProgressIndicator()
                     : TextField(
-                        controller: TextEditingController(text: _fullname),
+                        controller: _fullnameController,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(12),
                           border: OutlineInputBorder(
@@ -149,7 +173,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 _isLoading
                     ? const CircularProgressIndicator()
                     : TextField(
-                        controller: TextEditingController(text: _username),
+                        controller: _usernameController,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(12),
                           border: OutlineInputBorder(
@@ -168,8 +192,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                 const SizedBox(height: 20),
 
-                // Password Field
-                
+                // Email Field
                 const Text(
                   'Email',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -178,7 +201,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 _isLoading
                     ? const CircularProgressIndicator()
                     : TextField(
-                        controller: TextEditingController(text: _email),
+                        controller: _emailController,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(12),
                           border: OutlineInputBorder(
@@ -209,7 +232,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      onPressed: _saveProfileChanges,
+                        onPressed: () async {
+                        await _saveProfileChanges();
+                        Navigator.pop(context); // Navigate back to the profile page
+                        },
                       child: const Text(
                         'Save Changes',
                         style: TextStyle(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:carousel_slider/carousel_slider.dart'; // Add this package for the carousel
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:readify/edit_profile.dart';
+import 'package:readify/login_page.dart'; // Add this package for the carousel
 
 void main() {
   runApp(const MyApp());
@@ -47,15 +49,71 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 20),
               // Name and Username
-              const Center(
-                child: Text(
-                  'Princess Caballeda',
-                  style: TextStyle(
-                    fontFamily: 'Josefin Sans Regular',
-                    fontSize: 23,
-                    fontWeight: FontWeight.bold,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Princess Caballeda',
+                    style: TextStyle(
+                      fontFamily: 'Josefin Sans Regular',
+                      fontSize: 23,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+                  IconButton(
+                    icon: const Icon(Icons.more_horiz),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        backgroundColor: const Color(0xFFFFE9DE),
+                        context: context,
+                        builder: (context) {
+                          return Wrap(
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.edit),
+                                iconColor: const Color(0xFF953154),
+                                title: const Text(
+                                  'Edit Profile',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const EditProfilePage()),
+                                  );
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.logout),
+                                iconColor: const Color(0xFF953154),
+                                title: const Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const LoginPage()),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
               const Center(
                 child: Text(

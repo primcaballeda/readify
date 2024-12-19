@@ -3,6 +3,7 @@ import 'dart:async'; // Import Timer for debouncing
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:readify/addingreview.dart';
+import 'package:readify/book.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,26 +17,6 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: BookSearch(),
-    );
-  }
-}
-
-class Book {
-  final String title;
-  final String author;
-  final String imageUrl;
-
-  Book({required this.title, required this.author, required this.imageUrl});
-
-  factory Book.fromJson(Map<String, dynamic> json) {
-    return Book(
-      title: json['title'] ?? 'No Title',
-      author: (json['author_name'] != null && json['author_name'].isNotEmpty)
-          ? json['author_name'][0]
-          : 'Unknown Author',
-      imageUrl: json['cover_i'] != null
-          ? 'https://covers.openlibrary.org/b/id/${json['cover_i']}-L.jpg'
-          : 'https://via.placeholder.com/150', // Fallback image URL
     );
   }
 }
@@ -146,12 +127,12 @@ class _BookSearchState extends State<BookSearch> {
                 ),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                  color: Color(0xFF953154),
+                    color: Color(0xFF953154),
                   ),
                 ),
                 focusedBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                  color: Color(0xFF953154),
+                    color: Color(0xFF953154),
                   ),
                 ),
               ),

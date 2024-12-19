@@ -80,7 +80,9 @@ class _ProfilePageState extends State<ProfilePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const CircularProgressIndicator(
+                      color: Color(0xFFFFBEBE),
+                    )
                     : Text(
                         _fullname,
                         style: const TextStyle(
@@ -142,10 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   },
                 ),
               ],
-            ),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : Center(
+            ),Center(
                     child: Text(
                       '@$_username',
                       style: const TextStyle(

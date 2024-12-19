@@ -102,6 +102,17 @@ Future<void> _saveProfileChanges() async {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFE8), // Light yellow background
+      appBar: AppBar(
+        title: const Text('Edit Profile'),
+        backgroundColor: const Color(0xFFFFFFE8), // Light yellow
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -109,28 +120,27 @@ Future<void> _saveProfileChanges() async {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Picture Section
-                const Center(
+                Text(
+                  'Profile Picture',
+                  style: TextStyle(
+                    fontFamily: 'Josefin Sans Regular',
+                    fontSize: 20,
+                    color: const Color(0xFF953154),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Center(
                   child: Column(
+                    
                     children: [
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       CircleAvatar(
                         radius: 50,
-                        backgroundColor: Colors.grey,
-                        child: Icon(
-                          Icons.person,
-                          size: 50,
-                          color: Colors.white,
-                        ),
+                        backgroundColor: Color(0xFFFFBEBE),
+                        
                       ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Edit',
-                        style: TextStyle(
-                          color: Color(0xFF8E3A47),
-                          fontSize: 14,
-                        ),
-                      ),
+                      const SizedBox(height: 10),
+                      
                     ],
                   ),
                 ),
@@ -221,12 +231,13 @@ Future<void> _saveProfileChanges() async {
                 const SizedBox(height: 30),
 
                 // Save Button
-                Center(
+                Align(
+                  alignment: Alignment.centerRight,
                   child: SizedBox(
-                    width: double.infinity,
+                    width: 120,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFC0CB), // Light pink
+                        backgroundColor: const Color(0xFFFFBEBE), // Light pink
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -234,13 +245,14 @@ Future<void> _saveProfileChanges() async {
                       ),
                         onPressed: () async {
                         await _saveProfileChanges();
-                        Navigator.pop(context); // Navigate back to the profile page
+                        setState(() {});
                         },
                       child: const Text(
                         'Save Changes',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                          fontFamily: 'Josefin Sans Regular',
+                          color: Color(0xFF953154),
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

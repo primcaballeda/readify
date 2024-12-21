@@ -112,4 +112,8 @@ flutter:
     - assets/logo.png
     - assets/notif_bell.png
     - assets/login_logo.png
+    - assets/avatar/prim1.jpg
+    - assets/avatar/prim2.jpg
+    - assets/avatar/prim3.jpg
+    - assets/avatar/prim4.jpg
     - assets/

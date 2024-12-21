@@ -7,6 +7,7 @@ import 'package:readify/homepage.dart';
 import 'package:readify/view_book.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'Searchbar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -115,7 +116,8 @@ class _RootPageState extends State<RootPage> {
       final List<dynamic> bookList = data['docs'];
 
       // Convert the response into a list of Book objects
-      final fetchedBooks = bookList.map((json) => Book.fromJson(json)).take(4).toList();
+      final fetchedBooks =
+          bookList.map((json) => Book.fromJson(json)).take(4).toList();
 
       setState(() {
         books = fetchedBooks;
@@ -151,7 +153,8 @@ class _RootPageState extends State<RootPage> {
           isLoading
               ? const Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFBEBE)),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFFFFBEBE)),
                   ),
                 )
               : books.isEmpty
@@ -254,7 +257,21 @@ class _RootPageState extends State<RootPage> {
                     ),
                   ),
                 ),
-                onChanged: _onSearchChanged, // Update search query on input change
+                onChanged: (String query) {
+                  // Update your search query on input change
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                },
+                onSubmitted: (String query) {
+                  // Navigate to another page when "done" or "enter" is pressed
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Searchbar(searchQuery: query),
+                    ),
+                  );
+                },
               ),
             ),
           ),

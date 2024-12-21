@@ -1,8 +1,7 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-
+import 'package:readify/forgot_pass.dart';
 import 'package:readify/registration.dart';
 import 'package:readify/root_page.dart';
 import 'package:readify/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
@@ -31,12 +30,12 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
-TextEditingController usernameController = TextEditingController();
-TextEditingController emailController = TextEditingController();
-TextEditingController passwordController = TextEditingController();
+  TextEditingController usernameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
   final FirebaseAuthServices _firebaseAuthServices = FirebaseAuthServices();
+  bool _passwordVisible = false; // To manage password visibility
 
   @override
   Widget build(BuildContext context) {
@@ -44,38 +43,37 @@ TextEditingController passwordController = TextEditingController();
       decoration: const BoxDecoration(
         color: Color(0xFFFFFFE8),
       ),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: _logo(),
-        ),
-      );
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: _logo(),
+      ),
+    );
   }
 
   Widget _logo() {
     return Padding(
-      
       padding: const EdgeInsets.all(30.0),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _plogo(),
-                const SizedBox(height: 10.0),
-                _inputfield("Username or email", emailController),
-                const SizedBox(height: 15.0),
-                _inputfield("Password", passwordController, isPassword: true),
-                const SizedBox(height: 8.0),
-                _forgotpass(),
-                const SizedBox(height: 8.0),
-                _loginButton(),
-                const SizedBox(height: 80.0),
-                _extratext(),
-                const SizedBox(height: 8.0),
-                _registerButton(),
-              ],
-            ),
+      child: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _plogo(),
+              const SizedBox(height: 10.0),
+              _inputfield("Username or email", emailController),
+              const SizedBox(height: 15.0),
+              _passwordField(),
+              const SizedBox(height: 8.0),
+              _forgotpass(),
+              const SizedBox(height: 8.0),
+              _loginButton(),
+              const SizedBox(height: 80.0),
+              _extratext(),
+              const SizedBox(height: 8.0),
+              _registerButton(),
+            ],
           ),
+        ),
       ),
     );
   }
@@ -90,30 +88,70 @@ TextEditingController passwordController = TextEditingController();
       ),
     );
   }
-  Widget _inputfield(String labelText, TextEditingController controller, {isPassword = false}) {
-  var border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(10.0),
-    borderSide: const BorderSide(
-      color: Color(0xFFFFD4D4),
-      width: 3.0,
-    ),
-  );
 
-  return TextField(
-    style: TextStyle(color: const Color(0xFF953154).withOpacity(0.49)),
-    controller: controller,
-    decoration: InputDecoration(
-      labelText: labelText,
-      labelStyle: TextStyle(color: const Color(0xFF953154).withOpacity(0.49)),
-      enabledBorder: border,
-      focusedBorder: border,
-    ),
-    obscureText: isPassword,
-  );
-}
-Widget _loginButton() {
+  Widget _inputfield(String labelText, TextEditingController controller,
+      {isPassword = false}) {
+    var border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      borderSide: const BorderSide(
+        color: Color(0xFFFFD4D4),
+        width: 3.0,
+      ),
+    );
+
+    return TextField(
+      style: TextStyle(color: const Color(0xFF953154).withOpacity(0.49)),
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: TextStyle(color: const Color(0xFF953154).withOpacity(0.49)),
+        enabledBorder: border,
+        focusedBorder: border,
+      ),
+    );
+  }
+
+  // Password field with eye icon to toggle visibility
+  Widget _passwordField() {
+    var border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      borderSide: const BorderSide(
+        color: Color(0xFFFFD4D4),
+        width: 3.0,
+      ),
+    );
+
+    return TextField(
+      controller: passwordController,
+      obscureText: !_passwordVisible,
+      style: TextStyle(
+          color: const Color(0xFF953154)
+              .withOpacity(0.49)), // Preserved original font color
+      decoration: InputDecoration(
+        labelText: "Password",
+        labelStyle: TextStyle(
+            color: const Color(0xFF953154)
+                .withOpacity(0.49)), // Preserved label color
+        enabledBorder: border,
+        focusedBorder: border,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _passwordVisible ? Icons.visibility : Icons.visibility_off,
+            color: const Color(0xFF953154).withOpacity(0.49),
+          ),
+          onPressed: () {
+            setState(() {
+              _passwordVisible = !_passwordVisible; // Toggle visibility
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _loginButton() {
     return ElevatedButton(
-       onPressed: () => _signIn(), 
+      onPressed: () => _signIn(),
       style: ElevatedButton.styleFrom(
         minimumSize: const Size(double.infinity, 50), // Set the button size
         backgroundColor: const Color(0xFFFFD4D4),
@@ -132,115 +170,97 @@ Widget _loginButton() {
         ),
       ),
     );
-}
+  }
 
-Widget _forgotpass() {
-  return Container(
-    alignment: Alignment.centerRight,
-    child: Text(
-      "Forgot Password?",
-      style: TextStyle(
-        color: const Color(0xFF953154).withOpacity(0.50),
-        decoration: TextDecoration.underline, // Underline the text
-        decorationColor: const Color(0xFF953154).withOpacity(0.50), // Match underline color with text color
-      ),
-    ),
-  );
-}
-Widget _extratext2() {
-  return Container(
-    alignment: Alignment.centerLeft,
-    child: const Text(
-      "Password",
-      style: TextStyle(
-        color: Color(0xFF953154),
-        fontWeight: FontWeight.bold,
-        fontSize: 20,
-      ),
-    ),
-  );
-}
-Widget _extratext1() {
-  return Container(
-    alignment: Alignment.centerLeft,
-    child: const Text(
-      "Username",
-      style: TextStyle(
-        color: Color(0xFF953154),
-        fontWeight: FontWeight.bold,
-        fontSize: 20,
-      ),
-    ),
-  );
-}
-Widget _extratext() {
-  return Text(
-    "Doesn't have an account yet?",
-    style: TextStyle(
-      color: const Color(0xFF953154).withOpacity(0.58),
-    ),
-  );
-}
-Widget _registerButton() {
-  return ElevatedButton(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const RegistrationPage()),
-      );
-    },
-    style: ElevatedButton.styleFrom(
-      minimumSize: const Size(double.infinity, 50), // Set the button size
-      backgroundColor: const Color(0xFFFFFFE8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
-        side: const BorderSide(
-          color: Color(0xFFFFD4D4), // Stroke color
-          width: 2.0,
+  Widget _forgotpass() {
+    return Container(
+      alignment: Alignment.centerRight,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) {
+            return ForgotPasswordPage();
+          }));
+        },
+        child: Text(
+          "Forgot Password?",
+          style: TextStyle(
+            color: const Color(0xFF953154).withOpacity(0.50),
+            decoration: TextDecoration.underline, // Underline the text
+            decorationColor: const Color(0xFF953154)
+                .withOpacity(0.50), // Match underline color with text color
+          ),
         ),
       ),
-    ),
-    child: SizedBox(
-      width: double.infinity,
-      child: Text(
-        "Register",
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: const Color(0xFF953154).withOpacity(0.72),
-        ),
-      ),
-    ),
-  );
-}
-
-Future<void> _signIn() async {
-  String username = usernameController.text;
-  String email = emailController.text;
-  String password = passwordController.text;
-
-
-try {
-  User? user = await _firebaseAuthServices.signInWithEmailAndPassword(email, password); 
-
-  if (user != null) {
-    print("User created successfully");
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => RootPage()),
-    );
-  } else {
-    Fluttertoast.showToast(
-      msg: "Incorrect Username or Password",
-      toastLength: Toast.LENGTH_LONG,
-      backgroundColor: const Color.fromARGB(157, 0, 0, 0),
-      gravity: ToastGravity.SNACKBAR,
     );
   }
-} catch (e) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(e.toString())),
-  );
-}
-}
-}
 
+  Widget _extratext() {
+    return Text(
+      "Doesn't have an account yet?",
+      style: TextStyle(
+        color: const Color(0xFF953154).withOpacity(0.58),
+      ),
+    );
+  }
+
+  Widget _registerButton() {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const RegistrationPage()),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 50), // Set the button size
+        backgroundColor: const Color(0xFFFFFFE8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          side: const BorderSide(
+            color: Color(0xFFFFD4D4), // Stroke color
+            width: 2.0,
+          ),
+        ),
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(
+          "Register",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: const Color(0xFF953154).withOpacity(0.72),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _signIn() async {
+    String email = emailController.text;
+    String password = passwordController.text;
+
+    try {
+      User? user = await _firebaseAuthServices.signInWithEmailAndPassword(
+          email, password);
+
+      if (user != null) {
+        print("User signed in successfully");
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => RootPage()),
+        );
+      } else {
+        Fluttertoast.showToast(
+          msg: "Incorrect Username or Password",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: const Color.fromARGB(157, 0, 0, 0),
+          gravity: ToastGravity.SNACKBAR,
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+}

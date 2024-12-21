@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:readify/add_review.dart';
 import 'package:readify/addingreview.dart';
 import 'package:readify/book_details.dart' as details;
 import 'package:readify/firestore.dart';
+import 'package:readify/navbars.dart';
+import 'package:readify/root_page.dart';
 import 'package:readify/star_rating.dart';
 
 class MyApp extends StatelessWidget {
@@ -46,12 +50,32 @@ class ViewBook extends StatefulWidget {
 
 class _ViewBookState extends State<ViewBook> {
   final FirestoreService firestoreService = FirestoreService();
+  final CollectionReference likedBooks =
+      FirebaseFirestore.instance.collection('liked_books');
   bool _isLiked = false;
   int _selectedRating = 0;
   void _onRatingSelected(int rating) {
     setState(() {
       _selectedRating = rating;
     });
+  }
+
+  void initState() {
+    super.initState();
+    CustomAppBarBottomNav(
+      searchQuery: '',
+      isLoading: false,
+      books: [],
+      onSearchChanged: (query) {},
+      bottomNavIndex: 0,
+      onBottomNavTapped: (index) {},
+      pages: [],
+    );
+  }
+
+  String? _getCurrentUserId() {
+    User? user = FirebaseAuth.instance.currentUser;
+    return user?.uid;
   }
 
   @override
@@ -178,7 +202,132 @@ class _ViewBookState extends State<ViewBook> {
                   ),
                 ),
               ),
-              _reviewComment(),
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collectionGroup(
+                        'review_books') // Query across all subcollections
+                    .where('title',
+                        isEqualTo: widget.title) // Filter by book title
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Error loading reviews: ${snapshot.error}'),
+                    );
+                  }
+
+                  // Handle no data scenario
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No reviews available for "${widget.title}"',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    );
+                  }
+
+                  // Handle valid data scenario
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final reviewDoc = snapshot.data!.docs[index];
+                      final reviewData =
+                          reviewDoc.data() as Map<String, dynamic>;
+
+                      final reviewText =
+                          reviewData['review'] ?? 'No review available';
+                      final rating = reviewData['rating'] ?? 0;
+
+                      // Extract the parent document ID (before '/books/')
+                      final parentDocId = reviewDoc.reference.parent.parent!.id;
+
+                      // Debug: Print the parent document ID
+                      print('Fetching parent data for docId: $parentDocId');
+
+                      // Fetch parent data based on the extracted parent document ID
+                      return FutureBuilder<DocumentSnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('liked_books')
+                            .doc(parentDocId) // Fetch parent document data
+                            .get(),
+                        builder: (context, parentSnapshot) {
+                          if (parentSnapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const ListTile(
+                              title: Text('Loading parent data...'),
+                            );
+                          }
+
+                          if (!parentSnapshot.hasData ||
+                              parentSnapshot.data == null) {
+                            // Debug: Parent data not found
+                            print(
+                                'No parent data found for docId: $parentDocId');
+                            return ListTile(
+                              leading: const CircleAvatar(
+                                backgroundImage: NetworkImage(
+                                    'https://via.placeholder.com/150'),
+                              ),
+                              title: const Text('Unknown Parent'),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(reviewText),
+                                  Text(
+                                    'Rating: $rating',
+                                    style: const TextStyle(
+                                        color: Colors.grey, fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          final parentData = parentSnapshot.data!.data()
+                              as Map<String, dynamic>;
+                          final parentName =
+                              parentData['username'] ?? 'Unknown Parent';
+
+                          // Debug: Print fetched parent data
+                          print('Fetched parent: $parentName');
+
+                          return ListTile(
+                            leading: const CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                  'https://via.placeholder.com/150'),
+                            ),
+                            title: Text(
+                              parentName,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(reviewText),
+                                Text(
+                                  'Rating: $rating',
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+
               const Divider(
                 color: Color.fromARGB(46, 149, 49, 84),
                 thickness: 1.0,
@@ -243,16 +392,6 @@ class _ViewBookState extends State<ViewBook> {
                           ),
                         ),
                         const Spacer(),
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Icon(Icons.check,
-                                  color: Color(0xFF953154), size: 30),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 1),
@@ -289,22 +428,6 @@ class _ViewBookState extends State<ViewBook> {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            // Rated Text
-                            Align(
-                              alignment: Alignment
-                                  .centerLeft, // Align the stars to the left
-                              child: StarRating(
-                                rating: _selectedRating, // Pass current rating
-                                onRatingSelected: (newRating) {
-                                  setState(() {
-                                    _selectedRating =
-                                        newRating; // Update the state
-                                  });
-                                },
-                                size: 35,
-                                color: const Color(0xFFFFBEBE),
-                              ),
-                            ),
                           ],
                         ),
                         const Spacer(),
@@ -323,19 +446,100 @@ class _ViewBookState extends State<ViewBook> {
                                       height: 32,
                                     ),
                                     onPressed: () async {
+                                      final userId =
+                                          _getCurrentUserId(); // Ensure the user is authenticated
+
+                                      if (userId == null) {
+                                        // Show a message if the user is not authenticated
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  "User is not authenticated")),
+                                        );
+                                        return;
+                                      }
+
                                       setState(() {
                                         _isLiked =
                                             !_isLiked; // Toggle the liked state
                                       });
-                                      if (_isLiked) {
-                                        // Replace with actual image URL
 
-                                        await firestoreService.addToLikedBooks(
-                                          widget.title,
-                                          widget.author,
-                                          widget.description,
-                                          widget.imageUrl,
-                                        );
+                                      if (_isLiked) {
+                                        // Add the book to Firebase
+                                        try {
+                                          await firestoreService
+                                              .addToLikedBooks(
+                                            widget.title,
+                                            widget.author,
+                                            widget.description,
+                                            widget.imageUrl,
+                                          );
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    "Book added to Liked Books!")),
+                                          );
+                                        } catch (e) {
+                                          // Revert the state in case of error
+                                          setState(() {
+                                            _isLiked = !_isLiked;
+                                          });
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(
+                                                    "Error adding book: $e")),
+                                          );
+                                        }
+                                      } else {
+                                        // Find the book in Firebase and delete it
+                                        try {
+                                          // Query for the book in the 'likedBooks' collection
+                                          final querySnapshot = await likedBooks
+                                              .doc(userId)
+                                              .collection('books')
+                                              .where('title',
+                                                  isEqualTo: widget.title)
+                                              .limit(1)
+                                              .get();
+
+                                          if (querySnapshot.docs.isNotEmpty) {
+                                            final docID =
+                                                querySnapshot.docs.first.id;
+
+                                            // Call the delete function
+                                            await firestoreService
+                                                .deleteLikedBooks(docID);
+
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                  content: Text(
+                                                      "Book removed from Liked Books!")),
+                                            );
+                                          } else {
+                                            // If the book isn't found
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                  content: Text(
+                                                      "Book not found in Liked Books!")),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          // Handle errors during deletion
+                                          setState(() {
+                                            _isLiked = !_isLiked;
+                                          });
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(
+                                                    "Error removing book: $e")),
+                                          );
+                                        }
                                       }
                                     },
                                   );
@@ -548,13 +752,14 @@ class _ViewBookState extends State<ViewBook> {
     );
   }
 
-  Widget _reviewComment() {
-    return const Padding(
-      padding: EdgeInsets.all(8.0),
-      child: Text(
-        'This is a great book! I enjoyed reading it. The characters were relatable, and the plot kept me engaged.',
-        style: TextStyle(fontSize: 14, color: Colors.black),
+  Widget _reviewComment(String username, String imageUrl, String comment) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundImage: NetworkImage(imageUrl),
       ),
+      title:
+          Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Text(comment),
     );
   }
 }

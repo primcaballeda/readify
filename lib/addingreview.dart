@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:readify/firestore.dart';
 import 'package:readify/star_rating.dart';
 import 'package:readify/book_search.dart';
+import 'package:readify/book.dart';
 
 class AddingReview extends StatefulWidget {
   final Book book;  // The book passed from the BookSearch screen

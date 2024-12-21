@@ -12,15 +12,20 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   String _fullname = '';
   String _username = '';
-  String _email = '';
+  String _selectedAvatar = '';
   bool _isLoading = true;
 
-  // Create TextEditingControllers
   final TextEditingController _fullnameController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
 
   final FirestoreService firestoreService = FirestoreService();
+
+  List<String> avatarPaths = [
+    'assets/avatar/prim1.jpg',
+    'assets/avatar/prim2.jpg',
+    'assets/avatar/prim3.jpg',
+    'assets/avatar/prim4.jpg',
+  ];
 
   @override
   void initState() {
@@ -32,33 +37,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void dispose() {
     _fullnameController.dispose();
     _usernameController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
   Future<void> _fetchUserProfile() async {
-    // Fetch the current user's ID dynamically using FirebaseAuth
     String? userId = _getCurrentUserId();
 
     if (userId == null) {
-      // Handle the case when the user is not authenticated
       print('User not authenticated');
       return;
     }
 
-    // Fetch user profile from Firestore using the userId
     Map<String, String> userProfile = await firestoreService.getUserProfile(userId);
 
     setState(() {
-      _email = userProfile['email'] ?? 'Email not found';
       _fullname = userProfile['fullname'] ?? 'Full Name not found';
       _username = userProfile['username'] ?? 'Username not found';
-      _isLoading = false;
+      _selectedAvatar = userProfile['avatar'] ?? avatarPaths[0]; // Default avatar
 
-      // Update the controllers with the fetched data
+      _isLoading = false;
       _fullnameController.text = _fullname;
       _usernameController.text = _username;
-      _emailController.text = _email;
     });
   }
 
@@ -66,45 +65,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
     User? user = FirebaseAuth.instance.currentUser;
     return user?.uid;
   }
-Future<void> _saveProfileChanges() async {
-  String? userId = _getCurrentUserId();
 
-  if (userId == null) {
-    print('User not authenticated');
-    return;
+  Future<void> _saveProfileChanges() async {
+    String? userId = _getCurrentUserId();
+
+    if (userId == null) {
+      print('User not authenticated');
+      return;
+    }
+
+    try {
+      await firestoreService.updateUserProfile(
+        userId,
+        _fullnameController.text,
+        _usernameController.text,
+        _selectedAvatar // Save the selected avatar
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
+
+      await _fetchUserProfile();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating profile: $e')),
+      );
+    }
   }
-
-  try {
-    // Update the user profile with the new data
-    await firestoreService.updateUserProfile(
-      userId,
-      _fullnameController.text,
-      _usernameController.text,
-      _emailController.text,
-    );
-
-    // Notify user of successful update
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Profile updated successfully')),
-    );
-
-    // Refresh the profile data after update
-    await _fetchUserProfile();  // Re-fetch the updated profile data
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error updating profile: $e')),
-    );
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFE8), // Light yellow background
+      backgroundColor: const Color(0xFFFFFFE8),
       appBar: AppBar(
         title: const Text('Edit Profile'),
-        backgroundColor: const Color(0xFFFFFFE8), // Light yellow
+        backgroundColor: const Color(0xFFFFFFE8),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -120,29 +116,58 @@ Future<void> _saveProfileChanges() async {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Profile Picture',
                   style: TextStyle(
                     fontFamily: 'Josefin Sans Regular',
                     fontSize: 20,
-                    color: const Color(0xFF953154),
+                    color: Color(0xFF953154),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Center(
                   child: Column(
-                    
                     children: [
                       const SizedBox(height: 20),
                       CircleAvatar(
                         radius: 50,
-                        backgroundColor: Color(0xFFFFBEBE),
-                        
+                        backgroundImage: AssetImage(_selectedAvatar),
+                        backgroundColor: const Color(0xFFFFBEBE),
                       ),
                       const SizedBox(height: 10),
-                      
+                      const Text(
+                        'Tap an avatar below to select',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 20),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: avatarPaths.length,
+                  itemBuilder: (context, index) {
+                    final avatarPath = avatarPaths[index];
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedAvatar = avatarPath;
+                        });
+                      },
+                      child: CircleAvatar(
+                        backgroundImage: AssetImage(avatarPath),
+                        backgroundColor: _selectedAvatar == avatarPath
+                            ? Colors.greenAccent
+                            : Colors.transparent,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 30),
 
@@ -200,34 +225,6 @@ Future<void> _saveProfileChanges() async {
                           ),
                         ),
                       ),
-                const SizedBox(height: 20),
-
-                // Email Field
-                const Text(
-                  'Email',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 8),
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : TextField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.all(12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFFFD4D4), width: 3.0),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFFFD4D4), width: 3.0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFFFD4D4), width: 3.0),
-                          ),
-                        ),
-                      ),
                 const SizedBox(height: 30),
 
                 // Save Button
@@ -237,16 +234,15 @@ Future<void> _saveProfileChanges() async {
                     width: 120,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFBEBE), // Light pink
+                        backgroundColor: const Color(0xFFFFBEBE),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                        onPressed: () async {
+                      onPressed: () async {
                         await _saveProfileChanges();
-                        setState(() {});
-                        },
+                      },
                       child: const Text(
                         'Save Changes',
                         style: TextStyle(

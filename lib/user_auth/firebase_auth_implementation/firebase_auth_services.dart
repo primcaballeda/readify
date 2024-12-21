@@ -6,10 +6,12 @@ class FirebaseAuthServices {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Sign up with email, password, full name, and username
-  Future<User?> signUpWithEmailAndPassword(String email, String password, String fullName, String username) async {
+  Future<User?> signUpWithEmailAndPassword(
+      String email, String password, String fullName, String username) async {
     try {
       // Create user with email and password
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -33,8 +35,10 @@ class FirebaseAuthServices {
     return null;
   }
 
+
   // Sign in with email and password
-  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+  Future<User?> signInWithEmailAndPassword(
+      String email, String password) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -77,7 +81,8 @@ class FirebaseAuthServices {
         errorMessage = 'Wrong password provided for that user.';
         break;
       case 'email-already-in-use':
-        errorMessage = 'The email address is already in use by another account.';
+        errorMessage =
+            'The email address is already in use by another account.';
         break;
       case 'weak-password':
         errorMessage = 'The password is too weak.';
@@ -90,7 +95,8 @@ class FirebaseAuthServices {
         break;
     }
 
-    print(errorMessage); // You can replace this with something like a Toast or Snackbar for UI feedback
+    print(
+        errorMessage); // You can replace this with something like a Toast or Snackbar for UI feedback
     return null; // Return null to indicate failure
   }
 

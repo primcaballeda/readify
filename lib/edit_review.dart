@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:readify/book.dart';
 import 'package:readify/firestore.dart';
-import 'package:readify/library.dart';
 import 'package:readify/star_rating.dart';
 
 class EditReview extends StatefulWidget {

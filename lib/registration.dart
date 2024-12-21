@@ -12,7 +12,7 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override 
+  @override
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false, // Removes debug banner
@@ -37,6 +37,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmpasswordController = TextEditingController();
   TextEditingController emailController = TextEditingController();
+
+  bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
 
   @override
   void dispose() {
@@ -72,16 +75,15 @@ class _RegistrationPageState extends State<RegistrationPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _plogo(),
-                
                 _inputfield("Fullname", fullnameController),
                 const SizedBox(height: 15.0),
                 _inputfield("Username", usernameController),
                 const SizedBox(height: 15.0),
                 _inputfield("Email", emailController, isEmail: true),
                 const SizedBox(height: 15.0),
-                _inputfield("Password", passwordController, isPassword: true),
+                _passwordField("Password", passwordController),
                 const SizedBox(height: 15.0),
-                _inputfield("Confirm Password", confirmpasswordController, isPassword: true, isConfirmPassword: true),
+                _passwordField("Confirm Password", confirmpasswordController, isConfirmPassword: true),
                 const SizedBox(height: 20),
                 _registerButton(),
                 const SizedBox(height: 100.0),
@@ -138,6 +140,51 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
+  Widget _passwordField(String hintText, TextEditingController controller, {bool isConfirmPassword = false}) {
+    var border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      borderSide: const BorderSide(
+        color: Color(0xFFFFD4D4),
+        width: 3.0,
+      ),
+    );
+
+    return TextFormField(
+      style: TextStyle(color: const Color(0xFF953154).withOpacity(0.49)),
+      controller: controller,
+      obscureText: isConfirmPassword ? !_confirmPasswordVisible : !_passwordVisible,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: const Color(0xFF953154).withOpacity(0.49)),
+        enabledBorder: border,
+        focusedBorder: border,
+        suffixIcon: IconButton(
+          icon: Icon(
+            (isConfirmPassword ? _confirmPasswordVisible : _passwordVisible)
+                ? Icons.visibility
+                : Icons.visibility_off,
+            color: const Color(0xFF953154).withOpacity(0.49),
+          ),
+          onPressed: () {
+            setState(() {
+              if (isConfirmPassword) {
+                _confirmPasswordVisible = !_confirmPasswordVisible;
+              } else {
+                _passwordVisible = !_passwordVisible;
+              }
+            });
+          },
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return '$hintText is a required field';
+        }
+        return null;
+      },
+    );
+  }
+
   Widget _registerButton() {
     return ElevatedButton(
       onPressed: () {
@@ -165,41 +212,40 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
- Future<void> _signUp() async {
-  String fullname = fullnameController.text;
-  String username = usernameController.text;
-  String email = emailController.text;
-  String password = passwordController.text;
+  Future<void> _signUp() async {
+    String fullname = fullnameController.text;
+    String username = usernameController.text;
+    String email = emailController.text;
+    String password = passwordController.text;
 
-  try {
-    // Use the modified sign-up method that includes full name and username
-    User? user = await _firebaseAuthServices.signUpWithEmailAndPassword(
-      email, 
-      password, 
-      fullname, 
-      username,
-    );
-
-    if (user != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => RootPage()),
+    try {
+      // Use the modified sign-up method that includes full name and username
+      User? user = await _firebaseAuthServices.signUpWithEmailAndPassword(
+        email, 
+        password, 
+        fullname, 
+        username,
       );
-    } else {
-      // Display error if user creation fails
-      Fluttertoast.showToast(
-        msg: "Account creation failed. Please try again.",
-        toastLength: Toast.LENGTH_LONG,
-        backgroundColor: const Color.fromARGB(157, 0, 0, 0),
-        gravity: ToastGravity.SNACKBAR,
+
+      if (user != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => RootPage()),
+        );
+      } else {
+        // Display error if user creation fails
+        Fluttertoast.showToast(
+          msg: "Account creation failed. Please try again.",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: const Color.fromARGB(157, 0, 0, 0),
+          gravity: ToastGravity.SNACKBAR,
+        );
+      }
+    } catch (e) {
+      // Show error message if something goes wrong during the sign-up process
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
       );
     }
-  } catch (e) {
-    // Show error message if something goes wrong during the sign-up process
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.toString())),
-    );
   }
-}
-
 }

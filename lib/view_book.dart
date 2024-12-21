@@ -52,6 +52,9 @@ class _ViewBookState extends State<ViewBook> {
   final FirestoreService firestoreService = FirestoreService();
   final CollectionReference likedBooks =
       FirebaseFirestore.instance.collection('liked_books');
+
+  final CollectionReference bookReviews =
+      FirebaseFirestore.instance.collection('book_reviews');
   bool _isLiked = false;
   int _selectedRating = 0;
   void _onRatingSelected(int rating) {
@@ -70,6 +73,28 @@ class _ViewBookState extends State<ViewBook> {
       bottomNavIndex: 0,
       onBottomNavTapped: (index) {},
       pages: [],
+    );
+  }
+
+ 
+  Widget _heartIcon(String bookId, String userId) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return IconButton(
+          icon: Icon(
+            _isLiked ? Icons.favorite : Icons.favorite_border,
+            color: const Color(0xFFFFBEBE),
+            size: 20,
+          ),
+          onPressed: () async {
+            // Toggle the like state locally
+            setState(() {
+              _isLiked = !_isLiked;
+            });
+
+          },
+        );
+      },
     );
   }
 
@@ -255,8 +280,10 @@ class _ViewBookState extends State<ViewBook> {
                       // Fetch parent data based on the extracted parent document ID
                       return FutureBuilder<DocumentSnapshot>(
                         future: FirebaseFirestore.instance
-                            .collection('liked_books')
-                            .doc(parentDocId) // Fetch parent document data
+                            .collection(
+                                'users') // Fetch user data from the 'users' collection
+                            .doc(
+                                parentDocId) // Use parentDocId to fetch user data
                             .get(),
                         builder: (context, parentSnapshot) {
                           if (parentSnapshot.connectionState ==
@@ -273,53 +300,95 @@ class _ViewBookState extends State<ViewBook> {
                                 'No parent data found for docId: $parentDocId');
                             return ListTile(
                               leading: const CircleAvatar(
-                                backgroundImage: NetworkImage(
-                                    'https://via.placeholder.com/150'),
+                                backgroundImage: AssetImage(
+                                    'assets/default_avatar.png'), // Default asset if avatar not found
                               ),
                               title: const Text('Unknown Parent'),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(reviewText),
-                                  Text(
-                                    'Rating: $rating',
-                                    style: const TextStyle(
-                                        color: Colors.grey, fontSize: 14),
-                                  ),
+                                  _ratingStars(rating), // Display rating stars
+                                  _heartIcon(
+                                      widget.title,
+                                      _getCurrentUserId() ??
+                                          ''), // Heart icon added after the stars
                                 ],
                               ),
                             );
                           }
 
+                          // Safely check if data exists and cast it to a Map<String, dynamic>
                           final parentData = parentSnapshot.data!.data()
-                              as Map<String, dynamic>;
+                              as Map<String, dynamic>?;
+
+                          if (parentData == null) {
+                            // Handle case where parent data is missing
+                            return ListTile(
+                              leading: const CircleAvatar(
+                                backgroundImage: AssetImage(
+                                    'assets/default_avatar.png'), // Default asset if avatar not found
+                              ),
+                              title: const Text('Unknown Parent'),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(reviewText),
+                                  _ratingStars(rating), // Display rating stars
+                                  _heartIcon(
+                                      widget.title,
+                                      _getCurrentUserId() ??
+                                          ''), // Heart icon added after the stars
+                                ],
+                              ),
+                            );
+                          }
+
                           final parentName =
                               parentData['username'] ?? 'Unknown Parent';
+                          final parentAvatar = parentData['avatarUrl'] ?? '';
 
                           // Debug: Print fetched parent data
                           print('Fetched parent: $parentName');
 
+                          // Check if the avatar URL is a network URL or a local asset
+                          final avatarImage = parentAvatar.startsWith('http')
+                              ? NetworkImage(
+                                  parentAvatar) // Use NetworkImage for URLs
+                              : AssetImage(parentAvatar)
+                                  as ImageProvider; // Use AssetImage for local assets
+
                           return ListTile(
-                            leading: const CircleAvatar(
-                              backgroundImage: NetworkImage(
-                                  'https://via.placeholder.com/150'),
+                            leading: CircleAvatar(
+                              backgroundImage: avatarImage,
                             ),
-                            title: Text(
-                              parentName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment
+                                  .spaceBetween, // Align username and rating to opposite sides
                               children: [
-                                Text(reviewText),
                                 Text(
-                                  'Rating: $rating',
+                                  parentName,
                                   style: const TextStyle(
-                                      color: Colors.grey, fontSize: 14),
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Row(
+                                  children: [
+                                    _ratingStars(
+                                        rating), // Display rating stars
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left:
+                                              8.0), // Space between stars and heart
+                                      child: _heartIcon(
+                                          widget.title,
+                                          _getCurrentUserId() ??
+                                              ''), // Heart icon added after the stars
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
+                            subtitle: Text(reviewText),
                           );
                         },
                       );
@@ -760,6 +829,24 @@ class _ViewBookState extends State<ViewBook> {
       title:
           Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text(comment),
+    );
+  }
+
+// Function to display rating stars
+  Widget _ratingStars(int rating) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end, // Align stars to the right
+      children: [
+        ...List.generate(
+          rating,
+          (index) => const Icon(Icons.star, color: Color(0xFFFFBEBE), size: 16),
+        ),
+        ...List.generate(
+          5 - rating, // Remaining empty stars
+          (index) =>
+              const Icon(Icons.star_border, color: Color(0xFFFFBEBE), size: 16),
+        ),
+      ],
     );
   }
 }

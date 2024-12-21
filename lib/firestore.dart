@@ -17,6 +17,29 @@ class FirestoreService {
     return _auth.currentUser?.uid;
   }
 
+  Future<Map<String, String>> getBookAndUserIds() async {
+    try {
+      final userId = _getCurrentUserId();
+      if (userId != null) {
+        // Fetch all review books for the current user
+        final userReviewsSnapshot =
+            await bookReviews.doc(userId).collection('review_books').get();
+
+        Map<String, String> bookAndUserIds = {};
+        // Add each bookId and userId to the map
+        for (var doc in userReviewsSnapshot.docs) {
+          String bookId = doc.id; // Book document ID is the bookId
+          bookAndUserIds[bookId] = userId; // Map bookId to userId
+        }
+        return bookAndUserIds;
+      }
+      return {};
+    } catch (e) {
+      print("Error fetching book and user IDs: $e");
+      return {};
+    }
+  }
+
   // Create
   Future<void> addReview(String title, String author, String review, int rating,
       String imageUrl) async {
@@ -273,19 +296,18 @@ class FirestoreService {
 
   // Update
   Future<void> updateUserProfile(
-    String docID, String fullname, String username, String avatarUrl) async {
-  try {
-    await users.doc(docID).update({
-      'fullName': fullname,
-      'username': username,
-      'avatarUrl': avatarUrl, // Adding avatarUrl field
-    });
-    print('Updating profile for docID: $docID');
-  } catch (e) {
-    print('Error updating user data: $e');
+      String docID, String fullname, String username, String avatarUrl) async {
+    try {
+      await users.doc(docID).update({
+        'fullName': fullname,
+        'username': username,
+        'avatarUrl': avatarUrl, // Adding avatarUrl field
+      });
+      print('Updating profile for docID: $docID');
+    } catch (e) {
+      print('Error updating user data: $e');
+    }
   }
-}
-
 
   Future<void> editReview(String docID, String title, String author,
       String imageUrl, String newReview, int newRating) async {

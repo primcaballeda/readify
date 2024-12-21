@@ -15,13 +15,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Map<String, dynamic>> bookCovers = [];
+  List<Map<String, dynamic>> topBooks = [];
+  List<Map<String, dynamic>> scienceFictionBooks = [];
+  List<Map<String, dynamic>> romanceBooks = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchSelectedBooks();
+    fetchTopBooks();
+    fetchRomanceBooks();
+    fetchScienceFictionBooks();
   }
 
   @override
@@ -48,25 +52,25 @@ class _HomePageState extends State<HomePage> {
                       color: Color(0x80953154),
                     ),
                   ),
-                  const SizedBox(height: 5.0), // Reduced gap
+                  const SizedBox(height: 5.0),
                   Expanded(
-                    flex: 0, // Make sure the carousel takes less space
+                    flex: 0,
                     child: SingleChildScrollView(
                       child: CarouselSlider(
-                        items: buildBookRows(),
+                        items: buildBookRows(topBooks),
                         options: CarouselOptions(
                           autoPlay: false,
                           enlargeCenterPage: true,
                           viewportFraction: 0.9,
                           aspectRatio: 2.0,
-                          height: 150, // Carousel height
+                          height: 150,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20), // Reduced gap
+                  const SizedBox(height: 20),
                   const Text(
-                    'Popular Reviews',
+                    'Science Fiction Books',
                     style: TextStyle(
                       fontFamily: 'Josefin Sans Bold',
                       fontSize: 20,
@@ -74,19 +78,45 @@ class _HomePageState extends State<HomePage> {
                       color: Color(0x80953154),
                     ),
                   ),
-                  const SizedBox(height: 10), // Reduced gap
+                  const SizedBox(height: 10),
                   Expanded(
-                    flex: 1, // Make sure the grid of reviews takes the remaining space
-                    child: GridView.builder(
-                      itemCount: 6, // Placeholder count
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
+                    flex: 0,
+                    child: SingleChildScrollView(
+                      child: CarouselSlider(
+                        items: buildBookRows(scienceFictionBooks),
+                        options: CarouselOptions(
+                          autoPlay: false,
+                          enlargeCenterPage: true,
+                          viewportFraction: 0.9,
+                          aspectRatio: 2.0,
+                          height: 150,
+                        ),
                       ),
-                      itemBuilder: (context, index) {
-                        return buildReviewCardPlaceholder();
-                      },
+                    ),
+                  ),
+                  const Text(
+                    'Romance Books',
+                    style: TextStyle(
+                      fontFamily: 'Josefin Sans Bold',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0x80953154),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    flex: 0,
+                    child: SingleChildScrollView(
+                      child: CarouselSlider(
+                        items: buildBookRows(romanceBooks),
+                        options: CarouselOptions(
+                          autoPlay: false,
+                          enlargeCenterPage: true,
+                          viewportFraction: 0.9,
+                          aspectRatio: 2.0,
+                          height: 150,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -110,18 +140,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// Build book cover rows for Carousel
-  List<Widget> buildBookRows() {
+  List<Widget> buildBookRows(List<Map<String, dynamic>> books) {
     List<Widget> rows = [];
-    for (int i = 0; i < bookCovers.length; i += 3) {
+    for (int i = 0; i < books.length; i += 3) {
       rows.add(
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Expanded(child: buildBookCoverCard(bookCovers[i])),
-            if (i + 1 < bookCovers.length)
-              Expanded(child: buildBookCoverCard(bookCovers[i + 1])),
-            if (i + 2 < bookCovers.length)
-              Expanded(child: buildBookCoverCard(bookCovers[i + 2])),
+            Expanded(child: buildBookCoverCard(books[i])),
+            if (i + 1 < books.length)
+              Expanded(child: buildBookCoverCard(books[i + 1])),
+            if (i + 2 < books.length)
+              Expanded(child: buildBookCoverCard(books[i + 2])),
           ],
         ),
       );
@@ -168,8 +198,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Fetch book data concurrently
-  Future<void> fetchSelectedBooks() async {
+  /// Fetch Top Books data concurrently
+  Future<void> fetchTopBooks() async {
     const List<String> bookTitles = [
       'The Great Gatsby',
       '1984',
@@ -183,8 +213,7 @@ class _HomePageState extends State<HomePage> {
       try {
         final response = await http
             .get(Uri.parse(
-                'https://openlibrary.org/search.json?title=${Uri.encodeQueryComponent(title)}'))
-            .timeout(const Duration(seconds: 10));
+                'https://openlibrary.org/search.json?title=${Uri.encodeQueryComponent(title)}'));
 
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
@@ -220,63 +249,120 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
     setState(() {
-      bookCovers = results.where((book) => book.isNotEmpty).cast<Map<String, dynamic>>().toList();
+      topBooks = results.where((book) => book.isNotEmpty).cast<Map<String, dynamic>>().toList();
       isLoading = false;
     });
   }
 
-  /// Review Card Placeholder
-  Widget buildReviewCardPlaceholder() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 80,
-                height: 110,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        const Text('yanna', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'The Silence',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                    const Text('by Author\'s name', style: TextStyle(fontSize: 8)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text('Placeholder review text...', style: TextStyle(fontSize: 10)),
-      ],
-    );
+  /// Fetch Science Fiction Books data concurrently
+  Future<void> fetchScienceFictionBooks() async {
+    const List<String> bookTitles = [
+      'Dune',
+      'Neuromancer',
+      'The Left Hand of Darkness',
+      'Foundation',
+      'Snow Crash',
+      'The Three-Body Problem',
+    ];
+
+    List<Future<Map>> fetchTasks = bookTitles.map((title) async {
+      try {
+        final response = await http
+            .get(Uri.parse(
+                'https://openlibrary.org/search.json?title=${Uri.encodeQueryComponent(title)}'));
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final books = data['docs'];
+          if (books.isNotEmpty) {
+            final book = books[0];
+            final detailsResponse = await http
+                .get(Uri.parse('https://openlibrary.org${book['key']}.json'))
+                .timeout(const Duration(seconds: 10));
+
+            if (detailsResponse.statusCode == 200) {
+              final bookDetails = json.decode(detailsResponse.body);
+              return {
+                'title': book['title'],
+                'author': book['author_name']?.isNotEmpty ?? false
+                    ? book['author_name'][0]
+                    : 'Unknown Author',
+                'imageUrl': book['cover_i'] != null
+                    ? 'https://covers.openlibrary.org/b/id/${book['cover_i']}-L.jpg'
+                    : 'https://via.placeholder.com/150',
+                'description': bookDetails['description'] ?? 'No description available',
+              };
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Error fetching book: $title -> $e');
+      }
+      return {};
+    }).toList();
+
+    final results = await Future.wait(fetchTasks);
+
+    if (!mounted) return;
+    setState(() {
+      scienceFictionBooks = results.where((book) => book.isNotEmpty).cast<Map<String, dynamic>>().toList();
+      isLoading = false;
+    });
+  }
+
+  /// Fetch Romance Books data concurrently
+  Future<void> fetchRomanceBooks() async {
+    const List<String> bookTitles = [
+      'Pride and Prejudice',
+      'The Notebook',
+      'Outlander',
+      'Me Before You',
+      'The Selection',
+      'Fifty Shades of Grey',
+    ];
+
+    List<Future<Map>> fetchTasks = bookTitles.map((title) async {
+      try {
+        final response = await http
+            .get(Uri.parse(
+                'https://openlibrary.org/search.json?title=${Uri.encodeQueryComponent(title)}'));
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final books = data['docs'];
+          if (books.isNotEmpty) {
+            final book = books[0];
+            final detailsResponse = await http
+                .get(Uri.parse('https://openlibrary.org${book['key']}.json'))
+                .timeout(const Duration(seconds: 10));
+
+            if (detailsResponse.statusCode == 200) {
+              final bookDetails = json.decode(detailsResponse.body);
+              return {
+                'title': book['title'],
+                'author': book['author_name']?.isNotEmpty ?? false
+                    ? book['author_name'][0]
+                    : 'Unknown Author',
+                'imageUrl': book['cover_i'] != null
+                    ? 'https://covers.openlibrary.org/b/id/${book['cover_i']}-L.jpg'
+                    : 'https://via.placeholder.com/150',
+                'description': bookDetails['description'] ?? 'No description available',
+              };
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Error fetching book: $title -> $e');
+      }
+      return {};
+    }).toList();
+
+    final results = await Future.wait(fetchTasks);
+
+    if (!mounted) return;
+    setState(() {
+      romanceBooks = results.where((book) => book.isNotEmpty).cast<Map<String, dynamic>>().toList();
+      isLoading = false;
+    });
   }
 }

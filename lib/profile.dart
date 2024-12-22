@@ -78,9 +78,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                 height: 100,
                               ),
                             )
-                          : const Icon(
+                            : const CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Color(0xFFFFBEBE),
+                              child: Icon(
                               Icons.account_circle,
                               size: 100,
+                              color: Colors.white,
+                              ),
                             ),
                     ),
                     const SizedBox(height: 20),
@@ -317,109 +322,107 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+Widget buildRatedRow(String? title, int? rating, String? userId) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Circle Avatar with user's image from assets
+      Padding(
+        padding: const EdgeInsets.only(left: 10.0, top: 10),
+        child: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId) // Assuming `userId` is provided
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              // Show a loading indicator while fetching data
+              return const CircleAvatar(
+                backgroundColor: Color(0xFFFFBEBE),
+              );
+            }
 
-  Widget buildRatedRow(String? title, int? rating, String? userId) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Circle Avatar with user's image from assets
-        Padding(
-          padding: const EdgeInsets.only(left: 10.0, top: 10),
-          child: FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance
-                .collection('users')
-                .doc(userId) // Assuming `userId` is provided
-                .get(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                // Show a loading indicator while fetching data
-                return const CircleAvatar(
-                  backgroundColor: Colors.grey,
-                );
-              }
+            if (snapshot.hasError) {
+              return const CircleAvatar(
+                backgroundColor: Colors.grey,
+              );
+            }
 
-              if (snapshot.hasError) {
-                return const CircleAvatar(
-                  backgroundColor: Colors.grey,
-                );
-              }
+            if (snapshot.hasData && snapshot.data != null) {
+              final userData = snapshot.data!.data() as Map<String, dynamic>;
+              final avatarUrl = userData['avatarUrl']; // Assuming 'avatarUrl' field exists
 
-              if (snapshot.hasData && snapshot.data != null) {
-                final userData = snapshot.data!.data() as Map<String, dynamic>;
-                final avatarUrl =
-                    userData['avatarUrl']; // Assuming 'avatarUrl' field exists
-
-                return CircleAvatar(
-                  backgroundImage: avatarUrl != null
-                      ? AssetImage(avatarUrl) // Fetch image from assets
-                      : const AssetImage(
-                          'assets/images/default_avatar.png'), // Fallback to a default avatar
-                  radius: 20,
-                );
-              } else {
-                return const CircleAvatar(
-                  backgroundColor: Colors.grey,
-                );
-              }
-            },
+              return CircleAvatar(
+                backgroundImage: avatarUrl != null
+                    ? AssetImage(avatarUrl) // Fetch image from assets
+                    : const AssetImage(
+                        'assets/images/default_avatar.png'), // Fallback to a default avatar
+                radius: 20,
+              );
+            } else {
+              return const CircleAvatar(
+                backgroundColor: Colors.grey,
+              );
+            }
+          },
+        ),
+      ),
+      const SizedBox(width: 16),
+      // Text and stars
+      if (title != null && rating != null)
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Wrapping the text after a certain number of words
+              Wrap(
+                spacing: 4.0,
+                runSpacing: 4.0,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 15.0),
+                    child: Text.rich(
+                      TextSpan(
+                        text: 'You rated $title ',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black,
+                        ),
+                        children: [
+                          ...List.generate(
+                            rating,
+                            (index) => const WidgetSpan(
+                              child: Icon(Icons.star,
+                                  color: Color(0xFFFFBEBE), size: 16),
+                            ),
+                          ),
+                          ...List.generate(
+                            5 - rating, // Remaining empty stars
+                            (index) => const WidgetSpan(
+                              child: Icon(Icons.star_border,
+                                  color: Color(0xFFFFBEBE), size: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+                      softWrap: true,
+                      overflow: TextOverflow.visible,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        )
+      else
+        const Text(
+          'No review available',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.black54,
           ),
         ),
-        const SizedBox(width: 16),
-        // Text and stars
-        if (title != null && rating != null)
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Wrapping the text after a certain number of words
-                Wrap(
-                  spacing: 4.0,
-                  runSpacing: 4.0,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 15.0),
-                      child: Text.rich(
-                        TextSpan(
-                          text: 'You rated $title ',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black,
-                          ),
-                          children: [
-                            ...List.generate(
-                              rating,
-                              (index) => const WidgetSpan(
-                                child: Icon(Icons.star,
-                                    color: Color(0xFFFFBEBE), size: 16),
-                              ),
-                            ),
-                            ...List.generate(
-                              5 - rating, // Remaining empty stars
-                              (index) => const WidgetSpan(
-                                child: Icon(Icons.star_border,
-                                    color: Color(0xFFFFBEBE), size: 16),
-                              ),
-                            ),
-                          ],
-                        ),
-                        softWrap: true,
-                        overflow: TextOverflow.visible,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          )
-        else
-          const Text(
-            'No review available',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black54,
-            ),
-          ),
-      ],
-    );
-  }
+    ],
+  );
+}
 }

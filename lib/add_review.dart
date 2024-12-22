@@ -18,17 +18,14 @@ class AddReview extends StatefulWidget {
 class _AddReviewState extends State<AddReview> {
   final FirestoreService firestoreService = FirestoreService();
   final TextEditingController _reviewController = TextEditingController();
+  int _selectedRating = 0;
 
-  int _selectedRating = 0; // Store the selected star rating
-
-  // Callback to update the rating from StarRating widget
   void _onRatingSelected(int rating) {
     setState(() {
       _selectedRating = rating;
     });
   }
 
-  // Submit the review to Firestore
   void _submitReview() async {
     final reviewText = _reviewController.text;
 
@@ -44,7 +41,6 @@ class _AddReviewState extends State<AddReview> {
         reviewText,
         _selectedRating, 
         widget.book.imageUrl,
-        // Pass the star rating
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -53,7 +49,7 @@ class _AddReviewState extends State<AddReview> {
       );
       _reviewController.clear();
       setState(() {
-        _selectedRating = 0; // Reset the rating
+        _selectedRating = 0;
       });
     }
   }
@@ -71,7 +67,7 @@ class _AddReviewState extends State<AddReview> {
           child: IconButton(
             icon: const Icon(Icons.close, color: Color(0xFF953154)),
             onPressed: () {
-              Navigator.pop(context); // Close the review page
+              Navigator.pop(context);
             },
           ),
         ),
@@ -142,20 +138,19 @@ class _AddReviewState extends State<AddReview> {
                 thickness: 1.0,
               ),
               const SizedBox(height: 20.0),
-              // StarRating widget with callback
               Align(
-              alignment: Alignment.centerRight, // Align the stars to the left
-              child: StarRating(
-                rating: _selectedRating, // Example rating
-                onRatingSelected: _onRatingSelected, // Callback
-                size: 35, // Adjust size
-                color: Color (0xFFFFBEBE), // Filled star color
+                alignment: Alignment.centerRight,
+                child: StarRating(
+                  rating: _selectedRating,
+                  onRatingSelected: _onRatingSelected,
+                  size: 35,
+                  color: Color (0xFFFFBEBE),
+                ),
               ),
-            ),
               const SizedBox(height: 10),
               Center(
                 child: Text(
-                  'Rate', // Display selected rating
+                  'Rate',
                   style: const TextStyle(
                     fontFamily: 'Josefin Sans Regular',
                     fontSize: 16,

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:readify/forgot_pass.dart';
 import 'package:readify/registration.dart';
-import 'package:readify/root_page.dart';
+import 'package:readify/tools/root_page.dart';
 import 'package:readify/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
 
 void main() {
@@ -89,8 +89,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _inputfield(String labelText, TextEditingController controller,
-      {isPassword = false}) {
+  Widget _inputfield(String labelText, TextEditingController controller) {
     var border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(10.0),
       borderSide: const BorderSide(

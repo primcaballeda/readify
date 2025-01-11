@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:readify/Searchbar.dart';
-import 'package:readify/library.dart';
+import 'package:readify/tools/Searchbar.dart';
+import 'package:readify/navbars/library.dart';
 import 'package:readify/notifications.dart';
-import 'package:readify/profile.dart';
-import 'package:readify/homepage.dart';
-import 'package:readify/view_book.dart';
+import 'package:readify/navbars/profile.dart';
+import 'package:readify/navbars/homepage.dart';
+import 'package:readify/crud/view_book.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'Searchbar.dart';
+import '../tools/Searchbar.dart';
 
 void main() {
   runApp(const MyApp());

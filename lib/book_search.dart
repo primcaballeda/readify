@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:async'; // Import Timer for debouncing
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:readify/addingreview.dart';
-import 'package:readify/book.dart';
+import 'package:readify/crud/addingreview.dart';
+import 'package:readify/tools/book.dart';
 
 void main() {
   runApp(const MyApp());

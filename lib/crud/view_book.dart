@@ -4,13 +4,11 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:readify/add_review.dart';
-import 'package:readify/addingreview.dart';
-import 'package:readify/book_details.dart' as details;
-import 'package:readify/firestore.dart';
+import 'package:readify/crud/add_review.dart';
+import 'package:readify/crud/book_details.dart' as details;
+import 'package:readify/firebase_tools/firestore.dart';
 import 'package:readify/navbars.dart';
-import 'package:readify/root_page.dart';
-import 'package:readify/star_rating.dart';
+import 'package:readify/tools/star_rating.dart';
 
 class MyApp extends StatelessWidget {
   final details.Book book;

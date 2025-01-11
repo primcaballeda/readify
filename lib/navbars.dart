@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:readify/book.dart';
+import 'package:readify/tools/book.dart';
 import 'package:readify/notifications.dart';
 
 class CustomAppBarBottomNav extends StatelessWidget {

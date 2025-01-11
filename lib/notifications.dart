@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:readify/star_rating.dart';
+import 'package:readify/tools/star_rating.dart';
 
 void main() {
   runApp(const MyApp());

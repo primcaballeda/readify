@@ -1,34 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:readify/firestore.dart';
-import 'package:readify/star_rating.dart';
-import 'package:readify/book.dart';
+import 'package:readify/firebase_tools/firestore.dart';
+import 'package:readify/tools/star_rating.dart';
+import 'package:readify/crud/view_book.dart';
 
-class AddingReview extends StatefulWidget {
-  final Book book;  // The book passed from the BookSearch screen
+class AddReview extends StatefulWidget {
+  final ViewBook book;
 
-  const AddingReview({super.key, required this.book});
+  const AddReview({
+    Key? key,
+    required this.book,
+  }) : super(key: key);
 
   @override
-  State<AddingReview> createState() => _AddingReviewState();
+  State<AddReview> createState() => _AddReviewState();
 }
 
-class _AddingReviewState extends State<AddingReview> {
-  
+class _AddReviewState extends State<AddReview> {
   final FirestoreService firestoreService = FirestoreService();
   final TextEditingController _reviewController = TextEditingController();
+  int _selectedRating = 0;
 
-  int _selectedRating = 0; // Store the selected star rating
-
-  // Callback to update the rating from StarRating widget
   void _onRatingSelected(int rating) {
     setState(() {
       _selectedRating = rating;
     });
   }
 
-
-  // Function to handle the submission of the review
-void _submitReview() async {
+  void _submitReview() async {
     final reviewText = _reviewController.text;
 
     if (reviewText.isEmpty || _selectedRating == 0) {
@@ -43,7 +41,6 @@ void _submitReview() async {
         reviewText,
         _selectedRating, 
         widget.book.imageUrl,
-        // Pass the star rating
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -52,10 +49,11 @@ void _submitReview() async {
       );
       _reviewController.clear();
       setState(() {
-        _selectedRating = 0; // Reset the rating
+        _selectedRating = 0;
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,7 +67,7 @@ void _submitReview() async {
           child: IconButton(
             icon: const Icon(Icons.close, color: Color(0xFF953154)),
             onPressed: () {
-              Navigator.pop(context); // Close the review page
+              Navigator.pop(context);
             },
           ),
         ),
@@ -107,7 +105,7 @@ void _submitReview() async {
                       return const Icon(Icons.error, size: 150);
                     },
                   ),
-                  const SizedBox(width: 16.0), // Spacing between the image and the text
+                  const SizedBox(width: 16.0),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,55 +127,41 @@ void _submitReview() async {
                             color: Color(0xFF953154),
                           ),
                         ),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ],
               ),
-              const Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: Color(0xFF953154),
-                      thickness: 1.0,
-                    ),
-                  ),
-                  SizedBox(width: 4.0), // Space matching the heart icon width
-                ],
+              const SizedBox(height: 20.0),
+              const Divider(
+                color: Color(0xFF953154),
+                thickness: 1.0,
               ),
-              const SizedBox(height: 20.0), // Add spacing before star rating
+              const SizedBox(height: 20.0),
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.centerRight,
                 child: StarRating(
-                rating: _selectedRating, // Example rating
-                onRatingSelected: _onRatingSelected, // Callback
-                size: 35, // Adjust size
-                color: Color (0xFFFFBEBE), // Filled star color
+                  rating: _selectedRating,
+                  onRatingSelected: _onRatingSelected,
+                  size: 35,
+                  color: Color (0xFFFFBEBE),
+                ),
               ),
-              ), // Add the StarRating widget here
-              const SizedBox(height: 20.0), // Add spacing after star rating
-              const Center(
+              const SizedBox(height: 10),
+              Center(
                 child: Text(
-                  'Rate this book',
-                  style: TextStyle(
+                  'Rate',
+                  style: const TextStyle(
                     fontFamily: 'Josefin Sans Regular',
                     fontSize: 16,
-                    color: Color.fromARGB(255, 0, 0, 0),
+                    color: Color(0xFF953154),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              const Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: Color.fromARGB(255, 122, 117, 119),
-                      thickness: 1.0,
-                    ),
-                  ),
-                  SizedBox(width: 4.0), // Space matching the heart icon width
-                ],
+              const SizedBox(height: 20.0),
+              const Divider(
+                color: Color.fromARGB(255, 122, 117, 119),
+                thickness: 1.0,
               ),
               const SizedBox(height: 10),
               const Text(
@@ -222,6 +206,7 @@ void _submitReview() async {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

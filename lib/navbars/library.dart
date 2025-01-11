@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:readify/edit_review.dart';
-import 'package:readify/star_rating.dart';
-import 'package:readify/view_book.dart';
-import 'package:readify/firestore.dart';
-import 'package:readify/view_review.dart';
-import 'package:readify/book.dart';
+import 'package:readify/crud/edit_review.dart';
+import 'package:readify/tools/star_rating.dart';
+import 'package:readify/crud/view_book.dart';
+import 'package:readify/firebase_tools/firestore.dart';
+import 'package:readify/crud/view_review.dart';
+import 'package:readify/tools/book.dart';
 
 class Library extends StatelessWidget {
   const Library({super.key});

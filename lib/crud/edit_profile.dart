@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firestore.dart'; // Assuming this file contains your Firestore operations
+import '../firebase_tools/firestore.dart'; // Assuming this file contains your Firestore operations
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({Key? key}) : super(key: key);

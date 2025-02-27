@@ -96,8 +96,8 @@ class FirebaseAuthServices {
     }
 
     print(
-        errorMessage); // You can replace this with something like a Toast or Snackbar for UI feedback
-    return null; // Return null to indicate failure
+        errorMessage); 
+    return null; 
   }
 
   // Listen for auth state changes
